@@ -1,6 +1,5 @@
 "use client"
-import React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import "./list.css"
 import Navbar from "../../components/navbar/Navbar"
 import Header from "../../components/header/Header"
@@ -8,7 +7,24 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { format } from "date-fns"
 import { DateRange } from "react-date-range"
 import useFetch from "../../hooks/useFetch"
-import { Calendar, DollarSign, Users, Home, MapPin, Search } from "lucide-react"
+import {
+  Calendar,
+  DollarSign,
+  Users,
+  Home,
+  MapPin,
+  Search,
+  Star,
+  Heart,
+  Plane,
+  CheckCircle,
+  RefreshCw,
+  XCircle,
+  ArrowRight,
+  Map
+} from "lucide-react"
+import "react-date-range/dist/styles.css"
+import "react-date-range/dist/theme/default.css"
 
 const List = () => {
   const navigate = useNavigate()
@@ -19,164 +35,222 @@ const List = () => {
   const [options] = useState(location.state.options)
   const [min, setMin] = useState(undefined)
   const [max, setMax] = useState(undefined)
+  const [favorites, setFavorites] = useState(new Set())
 
   const [url, setUrl] = useState(`/hotels?city=${destination}&min=${min || 1000}&max=${max || 15000}`)
 
-  const { data, loading, error, refetch } = useFetch(url)
+  const { data, loading, error } = useFetch(url)
 
   const handleClick = () => {
     setUrl(`/hotels?city=${destination}&min=${min || 1000}&max=${max || 15000}`)
-    refetch()
+  }
+
+  const toggleFavorite = (id) => {
+    const newFavorites = new Set(favorites)
+    if (newFavorites.has(id)) {
+      newFavorites.delete(id)
+    } else {
+      newFavorites.add(id)
+    }
+    setFavorites(newFavorites)
   }
 
   return (
-    <div className="list-page">
+    <div className="listPage">
       <Navbar />
       <Header type="list" />
 
-      <div className="container">
-        <div className="search-container">
-          <h2>Find your perfect stay</h2>
+      <div className="listContainer">
+        <div className="searchPanel">
+          <div className="searchHeader">
+            <h1>Refine your search</h1>
+            <p>Find the perfect accommodation for your trip</p>
+          </div>
 
-          <div className="search-form">
-            <div className="search-row">
-              <div className="search-group">
-                <div className="search-icon">
-                  <MapPin size={18} />
-                </div>
-                <div className="search-input-wrapper">
-                  <label>Destination</label>
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="Where are you going?"
+          <div className="searchFilters">
+            <div className="filterGroup">
+              <label>
+                <MapPin size={18} className="filterIcon" />
+                Destination
+              </label>
+              <input
+                type="text"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="City or property name"
+                className="modernInput"
+              />
+            </div>
+
+            <div className="filterGroup">
+              <label>
+                <Calendar size={18} className="filterIcon" />
+                Dates
+              </label>
+              <div
+                className="dateDisplay"
+                onClick={() => setOpenDate(!openDate)}
+              >
+                {`${format(dates[0].startDate, "MMM dd")} - ${format(dates[0].endDate, "MMM dd")}`}
+              </div>
+              {openDate && (
+                <div className="datePickerWrapper">
+                  <DateRange
+                    editableDateInputs={true}
+                    onChange={(item) => setDates([item.selection])}
+                    moveRangeOnFirstSelection={false}
+                    ranges={dates}
+                    minDate={new Date()}
                   />
                 </div>
-              </div>
+              )}
+            </div>
 
-              <div className="search-group">
-                <div className="search-icon">
-                  <Calendar size={18} />
-                </div>
-                <div className="search-input-wrapper">
-                  <label>Check-in & Check-out</label>
-                  <div className="date-picker-trigger" onClick={() => setOpenDate(!openDate)}>
-                    {`${format(dates[0].startDate, "MMM dd, yyyy")} - ${format(dates[0].endDate, "MMM dd, yyyy")}`}
-                  </div>
-                  {openDate && (
-                    <div className="date-picker-dropdown">
-                      <DateRange onChange={(item) => setDates([item.selection])} minDate={new Date()} ranges={dates} />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="search-group">
-                <div className="search-icon">
-                  <DollarSign size={18} />
-                </div>
-                <div className="search-input-wrapper price-inputs">
-                  <label>Price Range</label>
-                  <div className="price-range">
-                    <input type="number" onChange={(e) => setMin(e.target.value)} placeholder="Min" />
-                    <span className="price-separator">-</span>
-                    <input type="number" onChange={(e) => setMax(e.target.value)} placeholder="Max" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="search-group">
-                <div className="search-icon">
-                  <Users size={18} />
-                </div>
-                <div className="search-input-wrapper">
-                  <label>Guests</label>
-                  <div className="guests-summary">
-                    {options.adult} adults · {options.children} children · {options.room} rooms
-                  </div>
-                </div>
+            <div className="filterGroup">
+              <label>
+                <DollarSign size={18} className="filterIcon" />
+                Price range
+              </label>
+              <div className="priceRangeInputs">
+                <input
+                  type="number"
+                  onChange={(e) => setMin(e.target.value)}
+                  placeholder="Min"
+                  className="modernInput"
+                />
+                <span className="rangeSeparator">
+                  <ArrowRight size={16} />
+                </span>
+                <input
+                  type="number"
+                  onChange={(e) => setMax(e.target.value)}
+                  placeholder="Max"
+                  className="modernInput"
+                />
               </div>
             </div>
 
-            <button className="search-button" onClick={handleClick}>
+            <div className="filterGroup">
+              <label>
+                <Users size={18} className="filterIcon" />
+                Guests & Rooms
+              </label>
+              <div className="guestSummary">
+                {options.adult} adults • {options.children} children • {options.room} rooms
+              </div>
+            </div>
+
+            <button className="searchButton" onClick={handleClick}>
               <Search size={18} />
-              <span>Search</span>
+              Update results
             </button>
           </div>
         </div>
 
-        <div className="results-container">
-          <div className="results-header">
-            <h2>{destination} accommodations</h2>
-            <p>{data?.length || 0} properties found</p>
+        <div className="resultsSection">
+          <div className="resultsHeader">
+            <h2>
+              Stays in <span className="highlight">{destination}</span>
+            </h2>
+            <p className="resultsCount">{data?.length || 0} properties found</p>
           </div>
 
-          <div className="results-grid">
-            {loading ? (
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Finding the best stays for you...</p>
-              </div>
-            ) : error ? (
-              <div className="error-message">
-                <p>Sorry, we couldn't fetch the available properties. Please try again.</p>
-              </div>
-            ) : data && data.length > 0 ? (
-              data.map((item) => (
-                <div className="hotel-card" key={item._id}>
-                  <div className="hotel-image">
-                    <img src={item.photos[0] || "/placeholder.svg?height=200&width=300"} alt={item.name} />
-                    {item.featured && <span className="featured-tag">Featured</span>}
-                  </div>
-                  <div className="hotel-content">
-                    <div className="hotel-info">
-                      <h3>{item.name}</h3>
-                      <div className="hotel-location">
-                        <MapPin size={14} />
-                        <span>{item.city}</span>
+          {loading ? (
+            <div className="loadingState">
+              <div className="loadingSpinner"></div>
+              <p>Discovering amazing stays...</p>
+            </div>
+          ) : error ? (
+            <div className="errorState">
+              <XCircle size={48} className="errorIcon" />
+              <p>We couldn't load properties. Please try again.</p>
+              <button onClick={handleClick} className="retryButton">
+                <RefreshCw size={16} />
+                Retry
+              </button>
+            </div>
+          ) : data && data.length > 0 ? (
+            <div className="hotelsGrid">
+              {data.map((hotel) => (
+                <div className="hotelCard" key={hotel._id}>
+                  <div className="hotelImageContainer">
+                    <img
+                      src={hotel.photos[0] || "/placeholder-hotel.jpg"}
+                      alt={hotel.name}
+                      className="hotelImage"
+                    />
+                    <button
+                      className={`favoriteButton ${favorites.has(hotel._id) ? "active" : ""}`}
+                      onClick={() => toggleFavorite(hotel._id)}
+                    >
+                      <Heart size={18} fill={favorites.has(hotel._id) ? "currentColor" : "none"} />
+                    </button>
+                    {hotel.featured && (
+                      <div className="featuredBadge">
+                        <Star size={12} fill="currentColor" />
+                        Featured
                       </div>
-                      <div className="hotel-features">
-                        {item.distance && (
-                          <span className="feature">
-                            <span className="feature-value">{item.distance}m</span> from center
+                    )}
+                  </div>
+                  <div className="hotelDetails">
+                    <div className="hotelInfo">
+                      <h3>{hotel.name}</h3>
+                      <div className="location">
+                        <MapPin size={14} />
+                        <span>{hotel.city}</span>
+                      </div>
+                      <div className="amenities">
+                        {hotel.distance && (
+                          <span>
+                            <Map size={12} />
+                            {hotel.distance}m from center
                           </span>
                         )}
-                        {item.free_airport_taxi && <span className="feature">Free airport taxi</span>}
-                        {item.free_cancellation && <span className="feature">Free cancellation</span>}
+                        {hotel.free_airport_taxi && (
+                          <span>
+                            <Plane size={12} />
+                            Free airport taxi
+                          </span>
+                        )}
+                        {hotel.free_cancellation && (
+                          <span>
+                            <CheckCircle size={12} />
+                            Free cancellation
+                          </span>
+                        )}
                       </div>
-                      <p className="hotel-description">{item.desc?.substring(0, 100)}...</p>
+                      <p className="description">{hotel.desc?.substring(0, 120)}...</p>
                     </div>
-                    <div className="hotel-pricing">
-                      <div className="rating-container">
-                        <div className="rating-text">
-                          <span>{item.rating_text || "Excellent"}</span>
-                          <span className="reviews-count">{item.review_count || "24"} reviews</span>
+                    <div className="hotelPricing">
+                      <div className="rating">
+                        <div className="ratingScore">
+                          <Star size={14} fill="currentColor" />
+                          {hotel.rating || "8.9"}
                         </div>
-                        <div className="rating-score">{item.rating || "8.9"}</div>
+                        <span className="reviews">{hotel.review_count || "24"} reviews</span>
                       </div>
-                      <div className="price-container">
-                        <span className="price">Rs.{item.cheapestPrice}</span>
-                        <span className="price-note">per night</span>
+                      <div className="price">
+                        <span className="amount">Rs. {hotel.cheapestPrice}</span>
+                        <span className="perNight">/ night</span>
                       </div>
                       <button
-                        className="view-deal-button"
-                        onClick={() => navigate(`/hotels/${item._id}`)}
+                        className="viewButton"
+                        onClick={() => navigate(`/hotels/${hotel._id}`)}
                       >
-                        View Deal
+                        View Details
                       </button>
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="no-results">
-                <Home size={48} />
-                <h3>No properties found</h3>
-                <p>Try adjusting your search criteria</p>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="emptyState">
+              <Home size={48} className="emptyIcon" />
+              <h3>No properties match your search</h3>
+              <p>Try adjusting your filters or search in a different area</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -14,6 +14,24 @@ import Profile from './pages/profile/profile';
 import Stays from './pages/stays/stays';
 import Flights from './pages/flights/flights';
 import MoneyExchange from './pages/money-exchange/money-exchange';
+import TouristGuide from './pages/Tourist/TouristGuide/touristguide';
+import TouristGuideForm from './pages/Tourist/Touristguider/Touristguider';
+import UserDashboard from './pages/Tourist/Touristuser/touristuser';
+import ChatPage from './pages/chat/chat';
+import TouristGuideDashboard from './pages/Tourist/Touristguidedashboard/TouristGuidedashboard';
+import Places from './pages/place/place';
+import Calendar from './pages/calender/calender';
+import TravellersChoice from './pages/Discover/TravellerChoise/TravellersChoice';
+import TravelStories from './pages/Discover/TravellersStories/TravellersStories';
+import Trips from './pages/Trips/trips';
+import WriteReview from './pages/ReviewAll/writereview/writereview';
+import AllReviewsPage from './pages/ReviewAll/viewreview/viewreview';
+import Createblog from './pages/blog/Createblog/createblog';
+import Viewblog from './pages/blog/Viewblog/viewblog';
+import FullBlog from './pages/blog/FullBlog/fullblog';
+import ChadParbaList from './pages/Events/allevents/allevents';
+import ChadParbaDetail from './pages/Events/viewbyid/viewbyid';
+import Bookings from './pages/booked/booked';
 function App() {
   return (
     <BrowserRouter>
@@ -27,9 +45,29 @@ function App() {
         <Route path='/money-exchange' element={<MoneyExchange />} />
         <Route path="/hotels" element={<List />} />
         <Route path="/hotels/:id" element={<Hotel />} />
+        <Route path='/touristguide' element={<TouristGuide />} />
+        <Route path="/create-tourist-guide" element={<TouristGuideForm />} />
+        <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path='/chat/:id' element={<ChatPage />} />
+        <Route path='/touristguide-dashboard' element={<TouristGuideDashboard />} />
+        <Route path='/places' element={<Places />} />
+        <Route path='/calender' element={<Calendar />} />
+        <Route path='/travellers-choice' element={<TravellersChoice />} />
+        <Route path='/travel-stories' element={<TravelStories />} />
+        <Route path='/trips' element={<Trips />} />
+        <Route path='/write-review' element={<WriteReview />} />
+        <Route path='/reviews' element={<AllReviewsPage />} />
+        <Route path='/write-blog' element={<Createblog />} />
+        <Route path='/blog' element={<Viewblog />} />
+        <Route path="/blog/:blogId" element={<FullBlog />} />
+        <Route path='/calendar' element={<Calendar />} />
+        <Route path='/events' element={<ChadParbaList />} />
+        <Route path='/events/:id' element={<ChadParbaDetail />} />
+        <Route path='/bookings' element= {<Bookings />} />
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
+

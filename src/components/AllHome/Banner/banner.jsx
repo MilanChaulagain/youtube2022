@@ -1,10 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./banner.css";
 
 const bannerData = [
     {
         id: "1",
-        image: "/images/1.png", 
+        image: "/images/1.png",
         sponsor: "Explore Nepals history and culture with us! and hidden gems of Nepalese Territory",
         title: "Discover Nepal History",
         description: "Find out why travelers like you are raving about Nepal",
@@ -19,8 +20,11 @@ const bannerData = [
 ];
 
 function TravelBanner() {
+    const navigate = useNavigate();
+
     const handleExploreClick = (title) => {
         console.log(`Exploring ${title}`);
+        navigate("/places");
     };
 
     return (

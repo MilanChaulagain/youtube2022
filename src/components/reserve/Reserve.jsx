@@ -1,16 +1,20 @@
 import React, { useContext, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
+import { faCircleXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import "./Reserve.css";
 import useFetch from "../../hooks/useFetch";
 import { SearchContext } from "../../context/SearchContext";
+import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const Reserve = ({ setOpen, hotelId }) => {
+const Reserve = ({ setOpen, hotelId, onSuccess }) => {
 	const [selectedRooms, setSelectedRooms] = useState([]);
-	const { data, loading, error } = useFetch(`/hotels/rooms/${hotelId}`);
+	const [isBooking, setIsBooking] = useState(false);
+	const [bookingSuccess, setBookingSuccess] = useState(false);
+	const { data = [], loading, error } = useFetch(`/hotels/rooms/${hotelId}`);
 	const { dates } = useContext(SearchContext);
+	const { user } = useContext(AuthContext);
 	const navigate = useNavigate();
 
 	const getDatesInRange = (startDate, endDate) => {
@@ -32,7 +36,7 @@ const Reserve = ({ setOpen, hotelId }) => {
 		: [];
 
 	const isAvailable = (roomNumber) => {
-		return !roomNumber.unavailableDates.some((date) =>
+		return !roomNumber.unavailableDates.some(date =>
 			alldates.includes(new Date(date).getTime())
 		);
 	};
@@ -40,25 +44,71 @@ const Reserve = ({ setOpen, hotelId }) => {
 	const handleSelect = (e) => {
 		const checked = e.target.checked;
 		const value = e.target.value;
-		setSelectedRooms((prev) =>
-			checked ? [...prev, value] : prev.filter((item) => item !== value)
+		const roomNumber = e.target.getAttribute("data-roomnumber");
+
+		setSelectedRooms(prev =>
+			checked
+				? [...prev, { id: value, number: roomNumber }]
+				: prev.filter(item => item.id !== value)
 		);
 	};
 
 	const handleClick = async () => {
+		if (!user) {
+			navigate("/login");
+			return;
+		}
+
+		if (selectedRooms.length === 0) {
+			alert("Please select at least one room");
+			return;
+		}
+
+		setIsBooking(true);
+
 		try {
 			await Promise.all(
-				selectedRooms.map((roomId) =>
-					axios.put(`/rooms/availability/${roomId}`, { dates: alldates })
+				selectedRooms.map(room =>
+					axios.put(`http://localhost:8800/api/rooms/availability/${room.id}`, {
+						dates: alldates,
+					})
 				)
 			);
-			setOpen(false);
-			navigate("/");
+
+			await axios.post("http://localhost:8800/api/reservations", {
+				userId: user._id,
+				roomIds: selectedRooms.map(room => room.id),
+				dates: alldates,
+			});
+
+			setIsBooking(false);
+			setBookingSuccess(true);
+
+			// Show success for 2 seconds then redirect
+			setTimeout(() => {
+				setOpen(false);
+				navigate("/bookings");
+			}, 2000);
+
 		} catch (err) {
 			console.error("Reservation failed", err);
-			alert("Reservation failed. Please try again.");
+			setIsBooking(false);
+			alert(err.response?.data?.message || "Reservation failed. Please try again.");
 		}
 	};
+
+	if (bookingSuccess) {
+		return (
+			<div className="reserve">
+				<div className="success-message">
+					<FontAwesomeIcon icon={faCheckCircle} className="success-icon" />
+					<h3>Booking Successful!</h3>
+					<p>Your rooms {selectedRooms.map(room => room.number).join(", ")} have been reserved.</p>
+					<p>Redirecting to your bookings...</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="reserve">
@@ -68,37 +118,44 @@ const Reserve = ({ setOpen, hotelId }) => {
 					className="rClose"
 					onClick={() => setOpen(false)}
 				/>
-				<span>Select your rooms:</span>
+				<h2>Select your rooms:</h2>
 
 				{loading ? (
-					<p>Loading rooms...</p>
+					<div className="loading">Loading rooms...</div>
 				) : error ? (
-					<p>Error loading room data.</p>
+					<div className="error">Error loading room data.</div>
 				) : data.length === 0 ? (
-					<p>No rooms found for this hotel.</p>
+					<div className="empty">No rooms found for this hotel.</div>
 				) : (
-					data.map((item) => (
+					data.filter(Boolean).map((item) => (
 						<div className="rItem" key={item._id}>
 							<div className="rItemInfo">
 								<div className="rTitle">{item.title}</div>
 								<div className="rDesc">{item.desc}</div>
-								<div className="rMax">
-									Max people: <b>{item.maxPeople}</b>
+								<div className="rDetails">
+									<span>Max people: <strong>{item.maxPeople}</strong></span>
+									<span>Price: <strong>Rs. {item.price}</strong></span>
 								</div>
-								<div className="rPrice">Rs. {item.price}</div>
 							</div>
 							<div className="rSelectRooms">
-								{item.roomNumbers.map((roomNumber) => {
+								{item.roomNumbers?.map(roomNumber => {
 									const available = isAvailable(roomNumber);
 									return (
-										<div className="room" key={roomNumber._id}>
-											<label>{roomNumber.number}</label>
-											<input
-												type="checkbox"
-												value={roomNumber._id}
-												onChange={handleSelect}
-												disabled={!available}
-											/>
+										<div
+											className={`room ${!available ? "unavailable" : ""}`}
+											key={roomNumber._id}
+										>
+											<label>
+												<span>Room {roomNumber.number}</span>
+												<input
+													type="checkbox"
+													value={roomNumber._id}
+													data-roomnumber={roomNumber.number}
+													onChange={handleSelect}
+													disabled={!available}
+												/>
+												{!available && <span className="booked">Booked</span>}
+											</label>
 										</div>
 									);
 								})}
@@ -109,10 +166,16 @@ const Reserve = ({ setOpen, hotelId }) => {
 
 				<button
 					onClick={handleClick}
-					className="rButton"
-					disabled={selectedRooms.length === 0}
+					className={`rButton ${isBooking ? "loading" : ""}`}
+					disabled={selectedRooms.length === 0 || isBooking}
 				>
-					Reserve Now!
+					{isBooking ? (
+						<>
+							<span className="spinner"></span> Processing...
+						</>
+					) : (
+						"Reserve Now!"
+					)}
 				</button>
 			</div>
 		</div>

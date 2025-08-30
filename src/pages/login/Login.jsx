@@ -4,6 +4,7 @@ import { MapPin, Eye, EyeOff } from "lucide-react"
 import axios from "axios"
 import { AuthContext } from "../../context/AuthContext"
 import "./login.css"
+import Navbar from "../../components/navbar/Navbar"
 
 const Login = () => {
     const [credentials, setCredentials] = useState({
@@ -40,100 +41,104 @@ const Login = () => {
     }
 
     return (
-        <div className="login-container">
-            <div className="login-box">
-                <div className="brand-section">
-                    <div className="brand-tagline">
-                        <MapPin className="icon-small" />
-                        <span>Discover the Beauty of Nepal</span>
-                    </div>
-                </div>
-
-                <div className="form-wrapper">
-                    <div className="form-header">
-                        <h2>Welcome Back</h2>
-                        <p>Sign in to your yatraNepal account to continue your journey</p>
+        <div>
+            <Navbar />
+            <div className="login-container">
+                <div className="login-box">
+                    <div className="brand-section">
+                        <div className="brand-tagline">
+                            <MapPin className="icon-small" />
+                            <span>Discover the Beauty of Nepal</span>
+                        </div>
                     </div>
 
-                    <form onSubmit={handleClick} className="login-form">
-                        <div className="form-group">
-                            <label htmlFor="username">Username</label>
-                            <input
-                                id="username"
-                                type="text"
-                                value={credentials.username}
-                                onChange={handleChange}
-                                placeholder="Enter your username"
-                                required
-                            />
+                    <div className="form-wrapper">
+                        <div className="form-header">
+                            <h2>Welcome Back</h2>
+                            <p>Sign in to your yatraNepal account to continue your journey</p>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password">Password</label>
-                            <div className="password-wrapper">
+                        <form onSubmit={handleClick} className="login-form">
+                            <div className="form-group">
+                                <label htmlFor="username">Username</label>
                                 <input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={credentials.password}
+                                    id="username"
+                                    type="text"
+                                    value={credentials.username}
                                     onChange={handleChange}
-                                    placeholder="Enter your password"
+                                    placeholder="Enter your username"
                                     required
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="toggle-password"
-                                >
-                                    {showPassword ? <EyeOff className="icon-small" /> : <Eye className="icon-small" />}
-                                </button>
                             </div>
-                        </div>
 
-                        <div className="form-options">
-                            <label className="checkbox-label">
-                                <input type="checkbox" />
-                                Remember me
-                            </label>
+                            <div className="form-group">
+                                <label htmlFor="password">Password</label>
+                                <div className="password-wrapper">
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={credentials.password}
+                                        onChange={handleChange}
+                                        placeholder="Enter your password"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="toggle-password"
+                                    >
+                                        {showPassword ? <EyeOff className="icon-small" /> : <Eye className="icon-small" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="form-options">
+                                <label className="checkbox-label">
+                                    <input type="checkbox" />
+                                    Remember me
+                                </label>
+                                <a
+                                    href="/"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        alert("Forgot password functionality will go here.")
+                                    }}
+                                >
+                                    Forgot password?
+                                </a>
+                            </div>
+
+                            <button type="submit" disabled={loading} className="submit-button">
+                                {loading ? (
+                                    <div className="loading-spinner">
+                                        <div className="spinner"></div>
+                                        Signing In...
+                                    </div>
+                                ) : (
+                                    "Sign In"
+                                )}
+                            </button>
+
+                            {error && <span className="error-text">{error.message}</span>}
+                        </form>
+
+                        <div className="signup-link">
+                            Don't have an account?{" "}
                             <a
                                 href="/"
                                 onClick={(e) => {
-                                    e.preventDefault()
-                                    alert("Forgot password functionality will go here.")
+                                    e.preventDefault();
+                                    navigate("/register");
                                 }}
                             >
-                                Forgot password?
+                                Sign up here
                             </a>
                         </div>
-
-                        <button type="submit" disabled={loading} className="submit-button">
-                            {loading ? (
-                                <div className="loading-spinner">
-                                    <div className="spinner"></div>
-                                    Signing In...
-                                </div>
-                            ) : (
-                                "Sign In"
-                            )}
-                        </button>
-
-                        {error && <span className="error-text">{error.message}</span>}
-                    </form>
-
-                    <div className="signup-link">
-                        Don't have an account?{" "}
-                        <a
-                            href="/"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                navigate("/register");
-                            }}
-                        >
-                            Sign up here
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
+
     )
 }
 

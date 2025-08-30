@@ -1,7 +1,7 @@
 .navbar {
   width: 100%;
   height: 60px;
-  background-color: #003580;
+  background-color: rgb(184, 104, 184);
   display: flex;
   justify-content: center;
   color: white;
@@ -10,20 +10,27 @@
 }
 
 .navContainer {
+  background-color: rgb(184, 104, 184);
+  position: fixed;
   width: 100%;
-  max-width: 1024px;
+  height: 60px;
+  padding: 0;
+  margin: 0;
+  top: 0;
+  max-width: 1700px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+  gap: 16px;
 }
 
 .logo-container {
   display: flex;
-  align-items: center;
   gap: 10px;
   text-decoration: none;
   color: white;
+  align-items: center;
 }
 
 .logo-img {
@@ -37,6 +44,84 @@
   font-size: 20px;
 }
 
+/* Center Nav Items */
+
+.navCenter {
+  font-size: 20px;
+  display: flex;
+  font-weight: bold;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  position: relative;
+}
+
+.navItemDropdown {
+  position: relative;
+  user-select: none;
+}
+
+.navItemButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.3s;
+}
+
+.navItemButton:hover {
+  color: #ffdede;
+}
+
+/* Dropdown menu hidden by default */
+.dropdownMenu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 160px;
+  background-color: white;
+  border-radius: 6px;
+  padding: 8px 0;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+}
+
+/* Show dropdown on hover desktop */
+@media (min-width: 769px) {
+  .navItemDropdown:hover .dropdownMenu {
+    display: block;
+  }
+}
+
+.dropdownItem {
+  display: block;
+  padding: 10px 16px;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.dropdownItem:hover {
+  background-color: #f1f1f1;
+  color: #003580;
+}
+
+/* Show dropdown on open (mobile toggle) */
+.navItemDropdown.open>.dropdownMenu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* User/Auth buttons */
 .navItems {
   display: flex;
   gap: 10px;
@@ -117,8 +202,9 @@
   background-color: #f1f1f1;
 }
 
-/* Optional: Responsive Design */
-@media screen and (max-width: 600px) {
+/* Responsive */
+
+@media screen and (max-width: 768px) {
   .navContainer {
     padding: 0 12px;
   }
@@ -132,8 +218,71 @@
     font-size: 14px;
   }
 
-  .navDropdown {
-    top: 40px;
+  .navCenter {
+    position: fixed;
+    top: 60px;
+    left: 0;
     right: 0;
+    background-color: rgb(184, 104, 184);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 0;
+    gap: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    z-index: 999;
+  }
+
+  /* Show navCenter when openMenu is not null */
+  .navCenter.open {
+    max-height: 100vh;
+    /* Large enough to show all */
+    overflow-y: auto;
+  }
+
+  .navItemDropdown {
+    width: 100%;
+  }
+
+  .navItemButton {
+    color: white;
+    width: 100%;
+    padding: 12px 16px;
+    justify-content: space-between;
+    font-size: 18px;
+  }
+
+  .arrow {
+    font-size: 14px;
+  }
+
+  .dropdownMenu {
+    position: static;
+    background-color: #f9f9f9;
+    box-shadow: none;
+    border-radius: 0;
+    padding-left: 32px;
+    display: none;
+  }
+
+  .navItemDropdown.open>.dropdownMenu {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dropdownItem {
+    padding: 10px 16px;
+    font-size: 16px;
+    color: #333;
+  }
+
+  /* Hide user profile dropdown positioning on mobile (optional) */
+  .navDropdown {
+    position: static;
+    box-shadow: none;
+    border-radius: 0;
+    background-color: white;
+    margin-top: 10px;
   }
 }

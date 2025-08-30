@@ -1,126 +1,86 @@
-// import React, { createContext, useReducer, useEffect } from "react";
+import React, { createContext, useReducer, useEffect } from "react";
 
-// const getUserFromStorage = () => {
-//     try {
-//         const storedUser = localStorage.getItem("user");
-//         if (storedUser && storedUser !== "undefined") {
-//             return JSON.parse(storedUser);
-//         }
-//         return null;
-//     } catch (err) {
-//         console.error("Failed to parse user from localStorage:", err);
-//         return null;
-//     }
-// };
+// Create context
+export const AuthContext = createContext();
 
-// const INITIAL_STATE = {
-//     user: getUserFromStorage(),
-//     loading: false,
-//     error: null,
-// };
-
-// export const AuthContext = createContext(INITIAL_STATE);
-
-// const AuthReducer = (state, action) => {
-//     switch (action.type) {
-//         case "LOGIN_START":
-//             return { user: null, loading: true, error: null };
-//         case "LOGIN_SUCCESS":
-//             return { user: action.payload, loading: false, error: null };
-//         case "LOGIN_FAILURE":
-//             return { user: null, loading: false, error: action.payload };
-//         case "LOGOUT":
-//             return { user: null, loading: false, error: null };
-//         default:
-//             return state;
-//     }
-// };
-
-// export const AuthContextProvider = ({ children }) => {
-//     const [state, dispatch] = useReducer(AuthReducer, INITIAL_STATE);
-
-//     useEffect(() => {
-//         if (state.user) {
-//             localStorage.setItem("user", JSON.stringify(state.user));
-//         } else {
-//             localStorage.removeItem("user");
-//         }
-//     }, [state.user]);
-
-//     return (
-//         <AuthContext.Provider
-//             value={{
-//                 user: state.user,
-//                 loading: state.loading,
-//                 error: state.error,
-//                 dispatch,
-//             }}
-//         >
-//             {children}
-//         </AuthContext.Provider>
-//     );
-// };
-
-"use client"
-import React from "react"
-import { createContext, useReducer, useEffect } from "react"
-
+// Initial state
 const INITIAL_STATE = {
-    user: JSON.parse(localStorage.getItem("user")) || null,
-    loading: false,
-    error: null,
-}
+    user: null,
+    isFetching: false,
+    error: false,
+};
 
-export const AuthContext = createContext(INITIAL_STATE)
-
+// Reducer function
 const AuthReducer = (state, action) => {
     switch (action.type) {
         case "LOGIN_START":
             return {
                 user: null,
-                loading: true,
-                error: null,
-            }
+                isFetching: true,
+                error: false,
+            };
         case "LOGIN_SUCCESS":
             return {
                 user: action.payload,
-                loading: false,
-                error: null,
-            }
+                isFetching: false,
+                error: false,
+            };
         case "LOGIN_FAILURE":
             return {
                 user: null,
-                loading: false,
-                error: action.payload,
-            }
+                isFetching: false,
+                error: true,
+            };
         case "LOGOUT":
             return {
                 user: null,
-                loading: false,
-                error: null,
-            }
+                isFetching: false,
+                error: false,
+            };
         default:
-            return state
+            return state;
     }
-}
+};
 
+// Provider
 export const AuthContextProvider = ({ children }) => {
-    const [state, dispatch] = useReducer(AuthReducer, INITIAL_STATE)
+    // Safe loading from localStorage
+    const getStoredUser = () => {
+        try {
+            const userData = localStorage.getItem("user");
+            if (userData && userData !== "undefined") {
+                return JSON.parse(userData);
+            }
+        } catch (err) {
+            console.error("Failed to parse user from localStorage:", err);
+        }
+        return null;
+    };
 
+    const [state, dispatch] = useReducer(AuthReducer, {
+        ...INITIAL_STATE,
+        user: getStoredUser(),
+    });
+
+    // Persist user state to localStorage
     useEffect(() => {
-        localStorage.setItem("user", JSON.stringify(state.user))
-    }, [state.user])
+        if (state.user) {
+            localStorage.setItem("user", JSON.stringify(state.user));
+        } else {
+            localStorage.removeItem("user");
+        }
+    }, [state.user]);
 
     return (
         <AuthContext.Provider
             value={{
                 user: state.user,
-                loading: state.loading,
+                isFetching: state.isFetching,
                 error: state.error,
                 dispatch,
             }}
         >
             {children}
         </AuthContext.Provider>
-    )
-}
+    );
+};

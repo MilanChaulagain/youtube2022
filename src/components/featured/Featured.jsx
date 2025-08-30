@@ -1,14 +1,20 @@
 import React from 'react';
 import "./featured.css";
-import useFetch from '../../hooks/useFetch.js';  // use lowercase 'u' for hooks by convention
+import useFetch from '../../hooks/useFetch.js';
 
 const Featured = () => {
-  const { data, loading, error } = useFetch("http://localhost:8800/api/hotels/countByCity?cities=Kathmandu,Lalitpur,Bhaktapur");
+  const { data, loading, error } = useFetch(
+    "http://localhost:8800/api/hotels/countByCity?cities=Kathmandu,Lalitpur,Bhaktapur"
+  );
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error loading data</div>;
+  if (error) return <div>Error loading data — check console</div>;
 
-  // Assuming data is an array like [countKathmandu, countLalitpur, countBhaktapur]
+  if (!Array.isArray(data) || data.length < 3) {
+    console.error("Unexpected data shape:", data);
+    return <div>Unexpected data format from API</div>;
+  }
+
   return (
     <div className="featured">
       <div className="featuredItem">
@@ -19,7 +25,7 @@ const Featured = () => {
         />
         <div className="featuredTitles">
           <h1>Kathmandu</h1>
-          <h2>{data ? `${data[0]} properties` : "No data"}</h2>
+          <h2>{data[0]} properties</h2>
         </div>
       </div>
 
@@ -31,7 +37,7 @@ const Featured = () => {
         />
         <div className="featuredTitles">
           <h1>Lalitpur</h1>
-          <h2>{data ? `${data[1]} properties` : "No data"}</h2>
+          <h2>{data[1]} properties</h2>
         </div>
       </div>
 
@@ -43,7 +49,7 @@ const Featured = () => {
         />
         <div className="featuredTitles">
           <h1>Bhaktapur</h1>
-          <h2>{data ? `${data[2]} properties` : "No data"}</h2>
+          <h2>{data[2]} properties</h2>
         </div>
       </div>
     </div>

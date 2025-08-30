@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import "./place_banner.css";
 
 const originalDestinations = [
@@ -19,6 +20,7 @@ export default function PlaceBanner() {
     const containerRef = useRef(null);
     const [destinations, setDestinations] = useState([]);
     const cardWidth = useRef(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const cloneStart = originalDestinations.slice(-3);
@@ -60,6 +62,12 @@ export default function PlaceBanner() {
         }
     };
 
+    const handleExploreClick = (destinationName) => {
+        // You can log or use the destinationName if needed
+        console.log(`Exploring ${destinationName}`);
+        navigate("/places");
+    };
+
     return (
         <div className="place-container">
             <h1 className="place-title">Top destinations for your next vacation</h1>
@@ -79,7 +87,12 @@ export default function PlaceBanner() {
                             />
                             <div className="card-overlay">
                                 <div className="card-title">{destination.name}</div>
-                                <button className="place-explore-button">Explore Now</button>
+                                <button
+                                    className="place-explore-button"
+                                    onClick={() => handleExploreClick(destination.name)}
+                                >
+                                    Explore Now
+                                </button>
                             </div>
                         </div>
                     ))}

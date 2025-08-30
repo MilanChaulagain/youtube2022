@@ -12,7 +12,7 @@ const TouristGuideBanner = () => {
     }
 
     const handleLearnMore = () => {
-        window.location.href = "/tourist-guide"
+        window.location.href = "/touristguide"
     }
 
     return (

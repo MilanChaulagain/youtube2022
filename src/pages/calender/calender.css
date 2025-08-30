@@ -1,0 +1,289 @@
+/* Calendar Container Styles */
+.calendar-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* Loading Message */
+.loading-message {
+    text-align: center;
+    font-size: 1.2rem;
+    margin: 2rem 0;
+    color: #666;
+}
+
+/* Calendar Header Styles */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.header-info {
+    text-align: center;
+}
+
+.main-title {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #2c3e50;
+}
+
+.sub-title {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin-top: 0.5rem;
+}
+
+.nav-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    color: #2c3e50;
+    transition: all 0.3s;
+}
+
+.nav-button:hover {
+    color: #3498db;
+    transform: scale(1.1);
+}
+
+/* Calendar Table Styles */
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.day-header {
+    padding: 0.8rem;
+    text-align: center;
+    background-color: #2c3e50;
+    color: white;
+    font-weight: normal;
+}
+
+.day-nepali {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+
+.day-english {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Saturday Header */
+.saturday-header {
+    background-color: #c0392b;
+}
+
+/* Calendar Cell Styles */
+.calendar-cell {
+    height: 80px;
+    width: 14.28%;
+    padding: 0.5rem;
+    vertical-align: top;
+    border: 1px solid #e0e0e0;
+    position: relative;
+}
+
+.current-month {
+    background-color: white;
+}
+
+.other-month {
+    background-color: #f9f9f9;
+    opacity: 0.6;
+}
+
+.date-number {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+}
+
+/* Today Cell - Green */
+.full-today {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.full-today .date-number {
+    color: white;
+}
+
+/* Saturday Cell - Red */
+.saturday {
+    background-color: #ffebee;
+}
+
+.saturday .date-number {
+    color: #c0392b;
+}
+
+/* Event Day Cell - Blue */
+.event-day {
+    background-color: #e3f2fd;
+}
+
+.event-day .date-number {
+    color: #1976d2;
+}
+
+/* Holiday Cell */
+.full-holiday {
+    background-color: #f39c12;
+    color: white;
+}
+
+.full-holiday .date-number {
+    color: white;
+}
+
+/* Events Section */
+.events-section {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.events-title {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #3498db;
+}
+
+.no-events {
+    text-align: center;
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 1rem;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.event-card {
+    display: flex;
+    background-color: white;
+    border-radius: 6px;
+    padding: 0.8rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #3498db;
+}
+
+.event-date-badge {
+    background-color: #3498db;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.event-details {
+    flex-grow: 1;
+}
+
+.event-title-nepali {
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+}
+
+.event-title-english {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* Legend Styles */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.legend-dot {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.today-dot {
+    color: #2ecc71;
+    /* Green */
+}
+
+.saturday-dot {
+    color: #c0392b;
+    /* Red */
+}
+
+.event-dot {
+    color: #1976d2;
+    /* Blue */
+}
+
+.holiday-dot {
+    color: #f39c12;
+    /* Orange */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 0.5rem;
+    }
+
+    .main-title {
+        font-size: 1.4rem;
+    }
+
+    .sub-title {
+        font-size: 1rem;
+    }
+
+    .calendar-cell {
+        height: 60px;
+    }
+
+    .events-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .legend {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+    }
+}
