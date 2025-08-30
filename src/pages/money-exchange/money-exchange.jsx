@@ -4,7 +4,7 @@ import {
     Globe, Landmark, Palette, Castle, Banknote, RefreshCw,
     ArrowLeftRight, Bus, Lightbulb, HelpCircle, Star, MapPin, CreditCard,
     Hospital, AlertCircle, Info, Flag, Navigation, Wallet, CircleDollarSign,
-    Map, ArrowRightLeft
+    Map, ArrowRightLeft, Heart, ExternalLink
 } from "lucide-react";
 import { MdAccountBalance, MdLocalTaxi } from "react-icons/md";
 import { FaDiagnoses } from "react-icons/fa";
@@ -12,6 +12,25 @@ import Navbar from "../../components/navbar/Navbar";
 import Header from "../../components/header/Header";
 import Footer from "../../components/footer/Footer";
 import "./money-exchange.css";
+
+// Star Rating Component
+const StarRating = ({ rating, size = 16, showEmpty = false }) => {
+    if (rating === null || rating === undefined) return null;
+
+    return (
+        <div className="star-rating">
+            {[...Array(5)].map((_, index) => (
+                <Star
+                    key={index}
+                    size={size}
+                    fill={index < Math.floor(rating) ? "currentColor" : "none"}
+                    color={index < Math.floor(rating) ? "#FFD700" : "#ccc"}
+                />
+            ))}
+            <span className="rating-text">({rating.toFixed(1)})</span>
+        </div>
+    );
+};
 
 const MoneyExchange = () => {
     const [exchangeRates, setExchangeRates] = useState([]);
@@ -23,9 +42,10 @@ const MoneyExchange = () => {
     const [useLocation, setUseLocation] = useState(false);
     const [userLocation, setUserLocation] = useState(null);
     const [hoveredCenter, setHoveredCenter] = useState(null);
-    const [radius, setRadius] = useState(5); // Default radius in km for near me search
+    const [radius, setRadius] = useState(5);
+    const [exchangeCenterRatings, setExchangeCenterRatings] = useState({});
+    const [activeTab, setActiveTab] = useState("rates");
 
-    // Tourism-focused currencies for Kathmandu Valley visitors
     const touristCurrencies = [
         { code: "USD", name: "US Dollar", flag: "🇺🇸", country: "United States" },
         { code: "EUR", name: "Euro", flag: "🇪🇺", country: "European Union" },
@@ -47,9 +67,74 @@ const MoneyExchange = () => {
         { code: "HKD", name: "Hong Kong Dollar", flag: "🇭🇰", country: "Hong Kong" },
     ];
 
+    // Fetch ratings for exchange centers
+    useEffect(() => {
+        const fetchRatings = async () => {
+            try {
+                console.log("Fetching ratings from API...");
+                const ratingsResponse = await fetch("http://localhost:8800/api/review/");
+
+                if (ratingsResponse.ok) {
+                    const ratingsData = await ratingsResponse.json();
+                    console.log("Ratings API response:", ratingsData);
+
+                    let allRatings = [];
+                    if (Array.isArray(ratingsData)) {
+                        allRatings = ratingsData;
+                    } else if (ratingsData.data && Array.isArray(ratingsData.data)) {
+                        allRatings = ratingsData.data;
+                    }
+
+                    // Debug: Log all reviews to see their structure
+                    console.log("All reviews:", allRatings);
+
+                    // Group ratings by exchange center ID
+                    const ratingsByCenter = {};
+                    allRatings.forEach(review => {
+                        console.log("Review:", review);
+
+                        // Try different model name variations and structures
+                        if (review.reviewedItem &&
+                            (review.reviewedModel === "MoneyExchange" ||
+                                review.reviewedModel === "moneyExchange" ||
+                                review.reviewedModel === "ExchangeCenter" ||
+                                review.reviewedModel === "exchange")) {
+
+                            const centerId = review.reviewedItem._id || review.reviewedItem;
+                            console.log("Adding review for center:", centerId);
+
+                            if (!ratingsByCenter[centerId]) {
+                                ratingsByCenter[centerId] = [];
+                            }
+                            ratingsByCenter[centerId].push(review);
+                        }
+                    });
+
+                    console.log("Ratings by center:", ratingsByCenter);
+                    setExchangeCenterRatings(ratingsByCenter);
+                } else {
+                    console.error("Failed to fetch ratings:", ratingsResponse.status);
+                }
+            } catch (error) {
+                console.error("Error fetching ratings:", error);
+            }
+        };
+
+        fetchRatings();
+    }, []);
+
+    // Calculate average rating for an exchange center
+    const getCenterRating = (centerId) => {
+        const reviews = exchangeCenterRatings[centerId];
+        if (!reviews || reviews.length === 0) return null;
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        return totalRating / reviews.length;
+    };
+
     // Haversine distance calculation function
     const haversineDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371; // Earth radius in km
+        const R = 6371;
         const dLat = deg2rad(lat2 - lat1);
         const dLon = deg2rad(lon2 - lon1);
         const a =
@@ -57,7 +142,7 @@ const MoneyExchange = () => {
             Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in km
+        return R * c;
     };
 
     const deg2rad = (deg) => deg * (Math.PI / 180);
@@ -81,7 +166,7 @@ const MoneyExchange = () => {
                     const rateToNPR = rateFromNPR ? 1 / rateFromNPR : 0;
 
                     // Calculate buy/sell spread (varies by city)
-                    const spread = 0.035; // 3.5% average spread across valley
+                    const spread = 0.035;
                     const buyRate = rateToNPR * (1 - spread / 2);
                     const sellRate = rateToNPR * (1 + spread / 2);
 
@@ -105,7 +190,6 @@ const MoneyExchange = () => {
         }
     };
 
-    // Get user location if enabled
     useEffect(() => {
         if (useLocation) {
             navigator.geolocation.getCurrentPosition(
@@ -126,7 +210,6 @@ const MoneyExchange = () => {
         }
     }, [useLocation]);
 
-    // Fetch exchange centers with distance calculation
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -202,7 +285,7 @@ const MoneyExchange = () => {
         kathmandu: {
             name: "Kathmandu",
             icon: <Landmark size={20} />,
-            color: "#c41e3a",
+            color: "#8B5CF6",
             exchanges: ["Thamel", "New Road", "Durbar Marg", "Lazimpat"],
             banks: ["Nepal Investment Bank", "Standard Chartered", "Himalayan Bank", "Nabil Bank"],
             atms: ["Thamel (Every 100m)", "Tribhuvan Airport", "Durbar Square", "Ratna Park"],
@@ -211,7 +294,7 @@ const MoneyExchange = () => {
         lalitpur: {
             name: "Lalitpur (Patan)",
             icon: <Palette size={20} />,
-            color: "#1e40af",
+            color: "#EC4899",
             exchanges: ["Lagankhel", "Jawalakhel", "Patan Dhoka", "Pulchowk"],
             banks: ["Rastriya Banijya Bank", "Nepal Bank", "Kumari Bank", "Civil Bank"],
             atms: ["Patan Durbar Square", "Lagankhel", "Jawalakhel Zoo", "Pulchowk Campus"],
@@ -220,7 +303,7 @@ const MoneyExchange = () => {
         bhaktapur: {
             name: "Bhaktapur",
             icon: <Castle size={20} />,
-            color: "#059669",
+            color: "#10B981",
             exchanges: ["Bhaktapur Durbar Square", "Suryabinayak", "Madhyapur Thimi"],
             banks: ["Agricultural Bank", "Machhapuchchhre Bank", "Sunrise Bank"],
             atms: ["Durbar Square Area", "Suryabinayak", "Thimi Chowk"],
@@ -282,6 +365,7 @@ const MoneyExchange = () => {
                         max="20"
                         value={radius}
                         onChange={(e) => setRadius(Number(e.target.value))}
+                        className="radius-slider"
                     />
                 </div>
             )}
@@ -319,42 +403,225 @@ const MoneyExchange = () => {
                 </div>
             ) : (
                 <div className="exchange-center-grid">
-                    {centers.map((center) => (
-                        <div
-                            key={center._id}
-                            className="exchange-center-card"
-                            onMouseEnter={() => setHoveredCenter(center)}
-                            onMouseLeave={() => setHoveredCenter(null)}
-                        >
-                            <img
-                                src={center.images[0] || "https://via.placeholder.com/150"}
-                                alt={center.name}
-                                className="exchange-center-image"
-                            />
-                            {hoveredCenter === center && (
-                                <div className="exchange-center-details">
-                                    <h3>{center.name}</h3>
-                                    <p>Address: {center.address}</p>
-                                    {center.distance && (
-                                        <p>Distance: {center.distance.toFixed(1)} km</p>
+                    {centers.map((center) => {
+                        const averageRating = getCenterRating(center._id);
+                        const reviewCount = exchangeCenterRatings[center._id]?.length || 0;
+
+                        return (
+                            <div
+                                key={center._id}
+                                className="exchange-center-card"
+                                onMouseEnter={() => setHoveredCenter(center)}
+                                onMouseLeave={() => setHoveredCenter(null)}
+                            >
+                                <img
+                                    src={center.images && center.images[0] ? center.images[0] : "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop"}
+                                    alt={center.name}
+                                    className="exchange-center-image"
+                                />
+
+                                {/* Rating display */}
+                                <div className="exchange-center-rating">
+                                    {averageRating !== null ? (
+                                        <div className="rating-badge">
+                                            <StarRating rating={averageRating} size={14} />
+                                            <span className="review-count">
+                                                {reviewCount} review{reviewCount !== 1 ? 's' : ''}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="rating-badge">
+                                            <span className="no-rating">No reviews yet</span>
+                                        </div>
                                     )}
-                                    <p>Contact: {center.contactNumber}</p>
-                                    <p>Hours: {center.hours}</p>
-                                    <button
-                                        onClick={() => handleViewMap(center.lat, center.lng)}
-                                        className="exchange-view-map-btn"
-                                    >
-                                        Get Directions
-                                    </button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+
+                                <div className="exchange-center-content">
+                                    <h3>{center.name}</h3>
+                                    <p className="exchange-center-address">
+                                        <MapPin size={12} /> {center.address}
+                                    </p>
+                                    {center.distance && (
+                                        <p className="exchange-center-distance">
+                                            📍 {center.distance.toFixed(1)} km away
+                                        </p>
+                                    )}
+                                </div>
+
+                                {hoveredCenter === center && (
+                                    <div className="exchange-center-details">
+                                        <h3>{center.name}</h3>
+                                        <p><strong>Address:</strong> {center.address}</p>
+                                        {center.distance && (
+                                            <p><strong>Distance:</strong> {center.distance.toFixed(1)} km</p>
+                                        )}
+                                        <p><strong>Contact:</strong> {center.contactNumber}</p>
+                                        <p><strong>Hours:</strong> {center.hours}</p>
+                                        <button
+                                            onClick={() => handleViewMap(center.lat, center.lng)}
+                                            className="exchange-view-map-btn"
+                                        >
+                                            <ExternalLink size={14} /> Get Directions
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
     );
 
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case "rates":
+                return (
+                    <div className="exchange-rates-grid">
+                        {exchangeRates.map((rate) => (
+                            <div key={rate.code} className="exchange-currency-card">
+                                <div className="exchange-currency-header">
+                                    <div className="exchange-currency-info">
+                                        <span className="exchange-currency-flag">{rate.flag}</span>
+                                        <div className="exchange-currency-details">
+                                            <h3>{rate.code}</h3>
+                                            <p className="exchange-currency-name">{rate.name}</p>
+                                            <p className="exchange-country-name">{rate.country}</p>
+                                        </div>
+                                    </div>
+                                    <div className="exchange-currency-badges">
+                                        {["USD", "EUR", "GBP", "INR"].includes(rate.code) && (
+                                            <span className="exchange-badge exchange-badge-popular">
+                                                <Star size={12} /> Popular
+                                            </span>
+                                        )}
+                                        {rate.code === "INR" && (
+                                            <span className="exchange-badge exchange-badge-border">
+                                                <MapPin size={12} /> Border Rate
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="exchange-rates-container">
+                                    <div className="exchange-rate-box exchange-buy-rate">
+                                        <span className="exchange-rate-label">We Buy (You Sell)</span>
+                                        <span className="exchange-rate-value">NPR {formatRate(rate.buyRate, rate.code)}</span>
+                                        <span className="exchange-rate-subtext">per 1 {rate.code}</span>
+                                    </div>
+                                    <div className="exchange-rate-box exchange-sell-rate">
+                                        <span className="exchange-rate-label">We Sell (You Buy)</span>
+                                        <span className="exchange-rate-value">NPR {formatRate(rate.sellRate, rate.code)}</span>
+                                        <span className="exchange-rate-subtext">per 1 {rate.code}</span>
+                                    </div>
+                                </div>
+
+                                <div className="exchange-conversion-example">
+                                    <CircleDollarSign size={14} />
+                                    <small>
+                                        Example: {rate.code} 100 = NPR {formatRate(rate.midRate * 100, rate.code)}
+                                    </small>
+                                </div>
+
+                                {getCurrencyTips(rate.code)}
+                            </div>
+                        ))}
+                    </div>
+                );
+            case "centers":
+                return renderExchangeCenters();
+            case "info":
+                return (
+                    <div className="exchange-info-tab">
+                        {/* City-specific information */}
+                        {selectedCity === "all" ? (
+                            <div className="exchange-valley-overview">
+                                <h2><Map size={24} /> Kathmandu Valley Exchange Overview</h2>
+                                <div className="exchange-city-grid">
+                                    {Object.entries(cityData).map(([key, city]) => (
+                                        <div key={key} className="exchange-city-card" style={{ borderTopColor: city.color }}>
+                                            <h3>
+                                                {city.icon} {city.name}
+                                            </h3>
+                                            <div className="exchange-city-info">
+                                                <div className="exchange-info-section">
+                                                    <h4><ArrowRightLeft size={18} /> Exchange Areas:</h4>
+                                                    <ul>
+                                                        {city.exchanges.map((area, idx) => (
+                                                            <li key={idx}>{area}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="exchange-info-section">
+                                                    <h4><MdAccountBalance size={18} /> Major Banks:</h4>
+                                                    <ul>
+                                                        {city.banks.slice(0, 2).map((bank, idx) => (
+                                                            <li key={idx}>{bank}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="exchange-info-section">
+                                                    <h4><Navigation size={18} /> Tourist Spots:</h4>
+                                                    <ul>
+                                                        {city.attractions.slice(0, 2).map((spot, idx) => (
+                                                            <li key={idx}>{spot}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="exchange-city-details">
+                                <h2>
+                                    {cityData[selectedCity].icon} {cityData[selectedCity].name} Exchange Guide
+                                </h2>
+                                <div className="exchange-details-grid">
+                                    <div className="exchange-detail-card">
+                                        <h3><ArrowLeftRight size={18} /> Best Exchange Locations</h3>
+                                        <ul>
+                                            {cityData[selectedCity].exchanges.map((area, idx) => (
+                                                <li key={idx}>
+                                                    <strong>{area}:</strong> {getAreaDescription(selectedCity, area)}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div className="exchange-detail-card">
+                                        <h3><MdAccountBalance size={18} /> Recommended Banks</h3>
+                                        <ul>
+                                            {cityData[selectedCity].banks.map((bank, idx) => (
+                                                <li key={idx}>{bank}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div className="exchange-detail-card">
+                                        <h3><CreditCard size={18} /> ATM Locations</h3>
+                                        <ul>
+                                            {cityData[selectedCity].atms.map((atm, idx) => (
+                                                <li key={idx}>{atm}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div className="exchange-detail-card">
+                                        <h3><MapPin size={18} /> Tourist Attractions</h3>
+                                        <ul>
+                                            {cityData[selectedCity].attractions.map((attraction, idx) => (
+                                                <li key={idx}>{attraction}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
     return (
         <div>
             <Navbar />
@@ -364,7 +631,7 @@ const MoneyExchange = () => {
                     <div className="exchange-header-top">
                         <div className="exchange-title">
                             <div>
-                                <h1>Kathmandu Valley Currency Exchange</h1>
+                                <h1> Kathmandu Valley Currency Exchange</h1>
                                 <p>Live exchange rates for Kathmandu • Lalitpur • Bhaktapur</p>
                             </div>
                         </div>
@@ -393,6 +660,28 @@ const MoneyExchange = () => {
                     </div>
 
                     {renderCitySelector()}
+
+                    {/* Tab Navigation */}
+                    <div className="exchange-tabs">
+                        <button
+                            className={`exchange-tab ${activeTab === "rates" ? "active" : ""}`}
+                            onClick={() => setActiveTab("rates")}
+                        >
+                            💱 Exchange Rates
+                        </button>
+                        <button
+                            className={`exchange-tab ${activeTab === "centers" ? "active" : ""}`}
+                            onClick={() => setActiveTab("centers")}
+                        >
+                            🏢 Exchange Centers
+                        </button>
+                        <button
+                            className={`exchange-tab ${activeTab === "info" ? "active" : ""}`}
+                            onClick={() => setActiveTab("info")}
+                        >
+                            ℹ️ City Info
+                        </button>
+                    </div>
                 </div>
 
                 <div className="exchange-content">
@@ -414,189 +703,7 @@ const MoneyExchange = () => {
                             <p>Loading current exchange rates...</p>
                         </div>
                     ) : (
-                        <>
-                            {/* City-specific information */}
-                            {selectedCity === "all" ? (
-                                <div className="exchange-valley-overview">
-                                    <h2><Map size={24} /> Kathmandu Valley Exchange Overview</h2>
-                                    <div className="exchange-city-grid">
-                                        {Object.entries(cityData).map(([key, city]) => (
-                                            <div key={key} className="exchange-city-card" style={{ borderTopColor: city.color }}>
-                                                <h3>
-                                                    {city.icon} {city.name}
-                                                </h3>
-                                                <div className="exchange-city-info">
-                                                    <div className="exchange-info-section">
-                                                        <h4><ArrowRightLeft size={18} /> Exchange Areas:</h4>
-                                                        <ul>
-                                                            {city.exchanges.map((area, idx) => (
-                                                                <li key={idx}>{area}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                    <div className="exchange-info-section">
-                                                        <h4><MdAccountBalance size={18} /> Major Banks:</h4>
-                                                        <ul>
-                                                            {city.banks.slice(0, 2).map((bank, idx) => (
-                                                                <li key={idx}>{bank}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                    <div className="exchange-info-section">
-                                                        <h4><Navigation size={18} /> Tourist Spots:</h4>
-                                                        <ul>
-                                                            {city.attractions.slice(0, 2).map((spot, idx) => (
-                                                                <li key={idx}>{spot}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="exchange-city-details">
-                                    <h2>
-                                        {cityData[selectedCity].icon} {cityData[selectedCity].name} Exchange Guide
-                                    </h2>
-                                    <div className="exchange-details-grid">
-                                        <div className="exchange-detail-card">
-                                            <h3><ArrowLeftRight size={18} /> Best Exchange Locations</h3>
-                                            <ul>
-                                                {cityData[selectedCity].exchanges.map((area, idx) => (
-                                                    <li key={idx}>
-                                                        <strong>{area}:</strong> {getAreaDescription(selectedCity, area)}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <div className="exchange-detail-card">
-                                            <h3><MdAccountBalance size={18} /> Recommended Banks</h3>
-                                            <ul>
-                                                {cityData[selectedCity].banks.map((bank, idx) => (
-                                                    <li key={idx}>{bank}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <div className="exchange-detail-card">
-                                            <h3><CreditCard size={18} /> ATM Locations</h3>
-                                            <ul>
-                                                {cityData[selectedCity].atms.map((atm, idx) => (
-                                                    <li key={idx}>{atm}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <div className="exchange-detail-card">
-                                            <h3><MapPin size={18} /> Tourist Attractions</h3>
-                                            <ul>
-                                                {cityData[selectedCity].attractions.map((attraction, idx) => (
-                                                    <li key={idx}>{attraction}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Exchange centers list */}
-                            {renderExchangeCenters()}
-
-                            {/* Exchange rates grid */}
-                            <div className="exchange-rates-grid">
-                                {exchangeRates.map((rate) => (
-                                    <div key={rate.code} className="exchange-currency-card">
-                                        <div className="exchange-currency-header">
-                                            <div className="exchange-currency-info">
-                                                <span className="exchange-currency-flag">{rate.flag}</span>
-                                                <div className="exchange-currency-details">
-                                                    <h3>{rate.code}</h3>
-                                                    <p className="exchange-currency-name">{rate.name}</p>
-                                                    <p className="exchange-country-name">{rate.country}</p>
-                                                </div>
-                                            </div>
-                                            <div className="exchange-currency-badges">
-                                                {["USD", "EUR", "GBP", "INR"].includes(rate.code) && (
-                                                    <span className="exchange-badge exchange-badge-popular">
-                                                        <Star size={12} /> Popular
-                                                    </span>
-                                                )}
-                                                {rate.code === "INR" && (
-                                                    <span className="exchange-badge exchange-badge-border">
-                                                        <MapPin size={12} /> Border Rate
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="exchange-rates-container">
-                                            <div className="exchange-rate-box exchange-buy-rate">
-                                                <span className="exchange-rate-label">We Buy (You Sell)</span>
-                                                <span className="exchange-rate-value">NPR {formatRate(rate.buyRate, rate.code)}</span>
-                                                <span className="exchange-rate-subtext">per 1 {rate.code}</span>
-                                            </div>
-                                            <div className="exchange-rate-box exchange-sell-rate">
-                                                <span className="exchange-rate-label">We Sell (You Buy)</span>
-                                                <span className="exchange-rate-value">NPR {formatRate(rate.sellRate, rate.code)}</span>
-                                                <span className="exchange-rate-subtext">per 1 {rate.code}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="exchange-conversion-example">
-                                            <CircleDollarSign size={14} />
-                                            <small>
-                                                Example: {rate.code} 100 = NPR {formatRate(rate.midRate * 100, rate.code)}
-                                            </small>
-                                        </div>
-
-                                        {getCurrencyTips(rate.code)}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Valley-wide transportation and tips */}
-                            <div className="exchange-valley-tips">
-                                <h2><Bus size={24} /> Getting Around Kathmandu Valley</h2>
-                                <div className="exchange-transport-grid">
-                                    <div className="exchange-transport-card">
-                                        <h3><MdLocalTaxi size={18} /> Between Cities</h3>
-                                        <p>
-                                            <strong>Kathmandu ↔ Lalitpur:</strong> 20-30 minutes by taxi (NPR 300-500)
-                                        </p>
-                                        <p>
-                                            <strong>Kathmandu ↔ Bhaktapur:</strong> 45-60 minutes by taxi (NPR 800-1200)
-                                        </p>
-                                        <p>
-                                            <strong>Lalitpur ↔ Bhaktapur:</strong> 30-45 minutes by taxi (NPR 600-900)
-                                        </p>
-                                    </div>
-                                    <div className="exchange-transport-card">
-                                        <h3><Bus size={18} /> Public Transport</h3>
-                                        <p>
-                                            <strong>Local Buses:</strong> NPR 15-25 between cities
-                                        </p>
-                                        <p>
-                                            <strong>Microbuses:</strong> NPR 20-35, more frequent
-                                        </p>
-                                        <p>
-                                            <strong>Tempo:</strong> NPR 10-20, shared rides
-                                        </p>
-                                    </div>
-                                    <div className="exchange-transport-card">
-                                        <h3><Wallet size={18} /> Payment Tips</h3>
-                                        <p>
-                                            <strong>Cash Preferred:</strong> NPR for all local transport
-                                        </p>
-                                        <p>
-                                            <strong>Tourist Taxis:</strong> May accept USD in Thamel area
-                                        </p>
-                                        <p>
-                                            <strong>Ride Apps:</strong> Pathao, InDrive accept digital payments
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
+                        renderTabContent()
                     )}
                 </div>
 
@@ -655,8 +762,6 @@ const MoneyExchange = () => {
             <Footer />
         </div>
     );
-
-    // Helper functions
     function getAreaDescription(city, area) {
         const descriptions = {
             kathmandu: {

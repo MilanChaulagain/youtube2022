@@ -1,44 +1,58 @@
-import React, { useContext, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { MapPin, Eye, EyeOff } from "lucide-react"
-import axios from "axios"
-import { AuthContext } from "../../context/AuthContext"
-import "./login.css"
-import Navbar from "../../components/navbar/Navbar"
+import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { MapPin, Eye, EyeOff } from "lucide-react";
+import axios from "axios";
+import { AuthContext } from "../../context/AuthContext";
+import "./login.css";
+import Navbar from "../../components/navbar/Navbar";
 
 const Login = () => {
     const [credentials, setCredentials] = useState({
         username: "",
         password: "",
-    })
+    });
 
-    const [showPassword, setShowPassword] = useState(false)
-    const { loading, error, dispatch } = useContext(AuthContext)
-    const navigate = useNavigate()
+    const [showPassword, setShowPassword] = useState(false);
+    const { loading, error, dispatch } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setCredentials((prev) => ({
             ...prev,
             [e.target.id]: e.target.value,
-        }))
-    }
+        }));
+    };
+
     const handleClick = async (e) => {
-        e.preventDefault()
-        dispatch({ type: "LOGIN_START" })
+        e.preventDefault();
+        dispatch({ type: "LOGIN_START" });
 
         try {
-            const res = await axios.post("/auth/login", credentials)
-            dispatch({ type: "LOGIN_SUCCESS", payload: res.data.details })
-            localStorage.setItem("token", res.data.token)
-            alert("Login successful!")
-            navigate("/")
+            const res = await axios.post("http://localhost:8800/api/auth/login", credentials, {
+                withCredentials: true,
+            });
+
+            console.log("Login response", res.data)
+
+            // Save user and token to localStorage
+            localStorage.setItem("user", JSON.stringify(res.data.details));
+            if (res.data.token) {
+                localStorage.setItem("token", res.data.token);
+            }
+
+            dispatch({ type: "LOGIN_SUCCESS", payload: res.data.details });
+            navigate("/");
         } catch (err) {
             dispatch({
                 type: "LOGIN_FAILURE",
                 payload: err.response?.data || { message: "Login failed." },
-            })
+            });
         }
-    }
+    };
+
+    const handleForgotPassword = () => {
+        navigate("/forgot-password");
+    };
 
     return (
         <div>
@@ -55,7 +69,7 @@ const Login = () => {
                     <div className="form-wrapper">
                         <div className="form-header">
                             <h2>Welcome Back</h2>
-                            <p>Sign in to your yatraNepal account to continue your journey</p>
+                            <p>Sign in to your YatraNepal account to continue your journey</p>
                         </div>
 
                         <form onSubmit={handleClick} className="login-form">
@@ -97,15 +111,9 @@ const Login = () => {
                                     <input type="checkbox" />
                                     Remember me
                                 </label>
-                                <a
-                                    href="/"
-                                    onClick={(e) => {
-                                        e.preventDefault()
-                                        alert("Forgot password functionality will go here.")
-                                    }}
-                                >
+                                <button type="button" className="forgot-link" onClick={handleForgotPassword}>
                                     Forgot password?
-                                </a>
+                                </button>
                             </div>
 
                             <button type="submit" disabled={loading} className="submit-button">
@@ -124,22 +132,18 @@ const Login = () => {
 
                         <div className="signup-link">
                             Don't have an account?{" "}
-                            <a
-                                href="/"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    navigate("/register");
-                                }}
+                            <button
+                                onClick={() => navigate("/register")}
+                                className="link-button"
                             >
                                 Sign up here
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    );
+};
 
-    )
-}
-
-export default Login
+export default Login;

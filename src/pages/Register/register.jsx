@@ -1,6 +1,5 @@
 "use client"
-import React from "react"
-import { useState, useContext } from "react"
+import React, { useState, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Eye, EyeOff, Upload, User, Mail, MapPin, Phone, Lock } from "lucide-react"
 import axios from "axios"
@@ -18,46 +17,22 @@ const RegisterPage = () => {
         phone: "",
         password: "",
         confirmPassword: "",
-        img: "",
     })
-
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [imageFile, setImageFile] = useState(null)
     const [imagePreview, setImagePreview] = useState(null)
-    const [localError, setLocalError] = useState("") // for local errors
+    const [localError, setLocalError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
-    const { loading, error, dispatch } = useContext(AuthContext)
+    const { dispatch } = useContext(AuthContext)
     const navigate = useNavigate()
 
-    const CLOUD_NAME = "doqbzwm1o"
-    const UPLOAD_PRESET = "upload"
-
-    const countries = [
-        "Nepal",
-        "United States",
-        "Canada",
-        "United Kingdom",
-        "Australia",
-        "Germany",
-        "France",
-        "Japan",
-        "Brazil",
-        "India",
-        "China",
-        "Mexico",
-        "Italy",
-        "Spain",
-        "Netherlands",
-        "Sweden",
-        "Norway",
-        "Denmark",
-        "Finland",
-    ]
+    const countries = ["Nepal", "United States", "Canada", "United Kingdom", "Australia", "Germany", "France", "Japan", "Brazil", "India", "China", "Mexico", "Italy", "Spain", "Netherlands", "Sweden", "Norway", "Denmark", "Finland"]
 
     const handleChange = (e) => {
         const { id, value } = e.target
-        setFormData((prev) => ({ ...prev, [id]: value }))
+        setFormData(prev => ({ ...prev, [id]: value }))
     }
 
     const handleImageChange = (e) => {
@@ -69,72 +44,119 @@ const RegisterPage = () => {
     }
 
     const uploadImageToCloudinary = async () => {
-        const data = new FormData()
-        data.append("file", imageFile)
-        data.append("upload_preset", UPLOAD_PRESET)
-
-        try {
-            const res = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, data)
-            return res.data.secure_url
-        } catch (err) {
-            console.error("Image upload failed:", err)
-            return null
-        }
+        if (!imageFile) return "";
+        
+        console.log("Image upload functionality not configured yet");
+        // Return empty string for now - user will be registered without image
+        return "";
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLocalError("")
+        setIsLoading(true)
 
+        // Client-side validations
         if (formData.password !== formData.confirmPassword) {
             setLocalError("Passwords do not match.")
+            setIsLoading(false)
             return
         }
-
         if (formData.password.length < 8) {
             setLocalError("Password must be at least 8 characters long.")
+            setIsLoading(false)
             return
-        }
-
-        dispatch({ type: "LOGIN_START" })
-
-        let imageUrl = ""
-        if (imageFile) {
-            imageUrl = await uploadImageToCloudinary()
-            if (!imageUrl) {
-                dispatch({
-                    type: "LOGIN_FAILURE",
-                    payload: { message: "Image upload failed." },
-                })
-                return
-            }
         }
 
         try {
-            await axios.post("/auth/register", {
-                ...formData,
-                img: imageUrl,
-            })
+            console.log("Starting registration process...")
+            
+            let imageUrl = ""
+            if (imageFile) {
+                console.log("Uploading image...")
+                imageUrl = await uploadImageToCloudinary()
+                console.log("Image upload result:", imageUrl ? "success" : "skipped")
+            }
 
-            const loginRes = await axios.post("/auth/login", {
-                username: formData.username,
-                password: formData.password,
-            })
+            // Send registration request
+            console.log("Sending registration request...")
+            const registerResponse = await axios.post(
+                "http://localhost:8800/api/auth/register", 
+                {
+                    username: formData.username,
+                    email: formData.email,
+                    password: formData.password,
+                    phone: formData.phone,
+                    city: formData.city,
+                    country: formData.country,
+                    img: imageUrl
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            )
 
+            console.log("Registration successful:", registerResponse.data)
+
+            // Auto-login after registration
+            console.log("Attempting auto-login...")
+            const loginRes = await axios.post(
+                "http://localhost:8800/api/auth/login", 
+                {
+                    username: formData.username,
+                    password: formData.password
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            )
+
+            console.log("Login successful:", loginRes.data)
+
+            // Save user data and token
+            if (loginRes.data.details) {
+                localStorage.setItem("user", JSON.stringify(loginRes.data.details))
+            }
+            if (loginRes.data.token) {
+                localStorage.setItem("token", loginRes.data.token)
+            }
+
+            // Update auth context
             dispatch({ type: "LOGIN_SUCCESS", payload: loginRes.data.details })
-            localStorage.setItem("token", loginRes.data.token)
+            
             alert("Registration and login successful!")
             navigate("/")
+            
         } catch (err) {
-            const msg = err.response?.data?.message
-            if (msg?.toLowerCase().includes("username")) {
-                setLocalError("Username is already taken.")
-            } else {
-                dispatch({
-                    type: "LOGIN_FAILURE",
-                    payload: err.response?.data || { message: "Registration failed." },
-                })
+            console.error("Registration error:", err)
+            console.error("Error response:", err.response?.data)
+            
+            let errorMessage = "Registration failed. Please try again."
+            
+            if (err.response?.data?.message) {
+                errorMessage = err.response.data.message
+            } else if (err.message) {
+                errorMessage = err.message
             }
+
+            if (errorMessage.toLowerCase().includes("username")) {
+                setLocalError("Username is already taken.")
+            } else if (errorMessage.toLowerCase().includes("email")) {
+                setLocalError("Email is already registered.")
+            } else if (errorMessage.toLowerCase().includes("cors")) {
+                setLocalError("Network error. Please check if the server is running.")
+            } else {
+                setLocalError(errorMessage)
+            }
+            
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -149,11 +171,11 @@ const RegisterPage = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="register-form">
-                        {/* Profile Image Upload */}
+                        {/* Profile Image */}
                         <div className="profile-upload-container">
                             <div className="profile-image-wrapper">
                                 {imagePreview ? (
-                                    <img src={imagePreview || "/placeholder.svg"} alt="Profile preview" className="profile-image" />
+                                    <img src={imagePreview} alt="Profile preview" className="profile-image" />
                                 ) : (
                                     <div className="profile-placeholder">
                                         <User className="w-8 h-8 text-gray-400" />
@@ -171,137 +193,123 @@ const RegisterPage = () => {
                                 />
                             </div>
                             <label htmlFor="img" className="profile-upload-label">
-                                <Upload size={16} />
-                                Upload Profile Image
+                                <Upload size={16} /> Upload Profile Image
                             </label>
                         </div>
 
-                        {/* Username and Email */}
+                        {/* Username & Email */}
                         <div className="form-row">
                             <div className="form-group">
-                                <label htmlFor="username" className="form-label">
-                                    <User size={16} />
-                                    Username *
-                                </label>
-                                <input
-                                    id="username"
-                                    type="text"
-                                    placeholder="Enter your username"
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    required
-                                    className="form-input"
+                                <label htmlFor="username" className="form-label"><User size={16} /> Username *</label>
+                                <input 
+                                    id="username" 
+                                    type="text" 
+                                    placeholder="Enter your username" 
+                                    value={formData.username} 
+                                    onChange={handleChange} 
+                                    required 
+                                    className="form-input" 
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="email" className="form-label">
-                                    <Mail size={16} />
-                                    Email *
-                                </label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    placeholder="Enter your email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                    className="form-input"
+                                <label htmlFor="email" className="form-label"><Mail size={16} /> Email *</label>
+                                <input 
+                                    id="email" 
+                                    type="email" 
+                                    placeholder="Enter your email" 
+                                    value={formData.email} 
+                                    onChange={handleChange} 
+                                    required 
+                                    className="form-input" 
                                 />
                             </div>
                         </div>
 
-                        {/* Country and City */}
+                        {/* Country & City */}
                         <div className="form-row">
                             <div className="form-group">
-                                <label htmlFor="country" className="form-label">
-                                    <MapPin size={16} />
-                                    Country *
-                                </label>
-                                <select id="country" value={formData.country} onChange={handleChange} required className="form-select">
+                                <label htmlFor="country" className="form-label"><MapPin size={16} /> Country *</label>
+                                <select 
+                                    id="country" 
+                                    value={formData.country} 
+                                    onChange={handleChange} 
+                                    required 
+                                    className="form-select"
+                                >
                                     <option value="">Select your country</option>
-                                    {countries.map((country) => (
-                                        <option key={country} value={country}>
-                                            {country}
-                                        </option>
+                                    {countries.map(country => (
+                                        <option key={country} value={country}>{country}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label htmlFor="city" className="form-label">
-                                    <MapPin size={16} />
-                                    City *
-                                </label>
-                                <input
-                                    id="city"
-                                    type="text"
-                                    placeholder="Enter your city"
-                                    value={formData.city}
-                                    onChange={handleChange}
-                                    required
-                                    className="form-input"
+                                <label htmlFor="city" className="form-label"><MapPin size={16} /> City *</label>
+                                <input 
+                                    id="city" 
+                                    type="text" 
+                                    placeholder="Enter your city" 
+                                    value={formData.city} 
+                                    onChange={handleChange} 
+                                    required 
+                                    className="form-input" 
                                 />
                             </div>
                         </div>
 
                         {/* Phone */}
                         <div className="form-group">
-                            <label htmlFor="phone" className="form-label">
-                                <Phone size={16} />
-                                Phone Number *
-                            </label>
-                            <input
-                                id="phone"
-                                type="tel"
-                                placeholder="Enter your phone number"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                required
-                                className="form-input"
+                            <label htmlFor="phone" className="form-label"><Phone size={16} /> Phone Number *</label>
+                            <input 
+                                id="phone" 
+                                type="tel" 
+                                placeholder="Enter your phone number" 
+                                value={formData.phone} 
+                                onChange={handleChange} 
+                                required 
+                                className="form-input" 
                             />
                         </div>
 
-                        {/* Password and Confirm Password */}
+                        {/* Password & Confirm */}
                         <div className="form-row">
                             <div className="form-group">
-                                <label htmlFor="password" className="form-label">
-                                    <Lock size={16} />
-                                    Password *
-                                </label>
+                                <label htmlFor="password" className="form-label"><Lock size={16} /> Password *</label>
                                 <div className="password-container">
-                                    <input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Enter your password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required
-                                        minLength={8}
-                                        className="form-input"
+                                    <input 
+                                        id="password" 
+                                        type={showPassword ? "text" : "password"} 
+                                        placeholder="Enter your password" 
+                                        value={formData.password} 
+                                        onChange={handleChange} 
+                                        required 
+                                        minLength={8} 
+                                        className="form-input" 
                                     />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="password-toggle">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowPassword(!showPassword)} 
+                                        className="password-toggle"
+                                    >
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label htmlFor="confirmPassword" className="form-label">
-                                    <Lock size={16} />
-                                    Confirm Password *
-                                </label>
+                                <label htmlFor="confirmPassword" className="form-label"><Lock size={16} /> Confirm Password *</label>
                                 <div className="password-container">
-                                    <input
-                                        id="confirmPassword"
-                                        type={showConfirmPassword ? "text" : "password"}
-                                        placeholder="Confirm your password"
-                                        value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        required
-                                        minLength={8}
-                                        className="form-input"
+                                    <input 
+                                        id="confirmPassword" 
+                                        type={showConfirmPassword ? "text" : "password"} 
+                                        placeholder="Confirm your password" 
+                                        value={formData.confirmPassword} 
+                                        onChange={handleChange} 
+                                        required 
+                                        minLength={8} 
+                                        className="form-input" 
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
                                         className="password-toggle"
                                     >
                                         {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -310,43 +318,41 @@ const RegisterPage = () => {
                             </div>
                         </div>
 
-                        {/* Error Messages */}
-                        {localError && <div className="error-text">{localError}</div>}
-                        {error && <div className="error-text">{error.message}</div>}
+                        {/* Errors */}
+                        {localError && (
+                            <div className="error-text">
+                                {localError}
+                            </div>
+                        )}
 
-                        {/* Password Requirements */}
-                        <div className="password-requirements">
-                            <p className="password-requirements-title">Password requirements:</p>
-                            <ul className="password-requirements-list">
-                                <li>At least 8 characters long</li>
-                                <li>Must match the confirmation password</li>
-                            </ul>
-                        </div>
-
-                        {/* Submit Button */}
-                        <button type="submit" disabled={loading} className="submit-button">
-                            {loading ? "Creating Account..." : "Create Account"}
+                        {/* Submit */}
+                        <button 
+                            type="submit" 
+                            disabled={isLoading} 
+                            className="submit-button"
+                        >
+                            {isLoading ? (
+                                <div>
+                                    Creating Account...
+                                </div>
+                            ) : (
+                                "Create Account"
+                            )}
                         </button>
 
-                        {/* Login Link */}
                         <div className="login-link-container">
                             Already have an account?{" "}
-                            <a
-                                href="/login"
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    navigate("/login")
-                                }}
+                            <button
+                                onClick={() => navigate("/login")}
                                 className="login-link"
                             >
                                 Sign in here
-                            </a>
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
     )
 }
 

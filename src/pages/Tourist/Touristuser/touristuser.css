@@ -1,4 +1,4 @@
-/* touristuser.css */
+/* Base Styles */
 .touristuser-dashboard {
     max-width: 1200px;
     margin: 0 auto;
@@ -214,8 +214,9 @@
     font-weight: 500;
 }
 
+/* Contact Button with Gradient */
 .touristuser-contact-button {
-    background: #ff6b35;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -223,11 +224,84 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
 }
 
 .touristuser-contact-button:hover {
-    background: #e55a2a;
+    background: linear-gradient(135deg, #5a6fd1 0%, #6a4293 100%);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
+}
+
+.touristuser-contact-button::after {
+    content: "▼";
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 10px;
+    transition: transform 0.2s;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Contact Options Dropdown */
+.touristuser-contact-options-container {
+    position: relative;
+    display: inline-block;
+}
+
+.touristuser-contact-options {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    width: 180px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    margin-bottom: 10px;
+    opacity: 0;
+    transform: translateY(10px);
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.touristuser-contact-options-container:hover .touristuser-contact-options {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.touristuser-contact-options button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.touristuser-contact-options button:hover {
+    background: #f8f9fa;
+}
+
+.touristuser-chat-option {
+    color: #1a2a6c;
+    border-bottom: 1px solid #eee;
+}
+
+.touristuser-whatsapp-option {
+    color: #25D366;
+}
+
+.touristuser-whatsapp-option svg {
+    margin-right: 8px;
+    font-size: 18px;
 }
 
 /* Attractions Section */
@@ -451,5 +525,30 @@
 
     .touristuser-hero h1 {
         font-size: 2rem;
+    }
+
+    .touristuser-contact-options {
+        width: 160px;
+    }
+}
+
+@media (max-width: 480px) {
+    .touristuser-guide-footer {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .touristuser-contact-options-container {
+        width: 100%;
+    }
+
+    .touristuser-contact-button {
+        width: 100%;
+    }
+
+    .touristuser-contact-options {
+        right: auto;
+        left: 0;
+        width: 100%;
     }
 }

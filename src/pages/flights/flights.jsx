@@ -285,7 +285,7 @@ const popularDestinations = [
         city: "Pokhara",
         price: 8500,
         description: "Lake City & Adventure Hub",
-        image: "/placeholder.svg?height=80&width=80",
+        image: "https://thumbs.dreamstime.com/b/bright-row-boats-lake-phewa-pokhara-nepal-colorful-docked-78712498.jpg",
         attractions: ["Phewa Lake", "Sarangkot", "Peace Pagoda"],
         weather: "Pleasant, 18-25°C",
     },
@@ -293,7 +293,7 @@ const popularDestinations = [
         city: "Lukla",
         price: 18500,
         description: "Gateway to Everest",
-        image: "/placeholder.svg?height=80&width=80",
+        image: "https://media.nepaltrekadventures.com/uploads/media/Blog/History%20of%20Lukla%20Airport/Lukla-villag.jpg",
         attractions: ["Everest Base Camp Trek", "Sherpa Culture", "Mountain Views"],
         weather: "Cold, 5-15°C",
     },
@@ -301,7 +301,7 @@ const popularDestinations = [
         city: "Jomsom",
         price: 16200,
         description: "Mustang Region",
-        image: "/placeholder.svg?height=80&width=80",
+        image: "https://media.nepaltrekadventures.com/uploads/img/jomsom-banner.webp",
         attractions: ["Upper Mustang", "Muktinath Temple", "Apple Orchards"],
         weather: "Dry, 10-20°C",
     },
@@ -309,7 +309,7 @@ const popularDestinations = [
         city: "Bharatpur",
         price: 9200,
         description: "Chitwan National Park",
-        image: "/placeholder.svg?height=80&width=80",
+        image: "https://www.footprintadventure.com/uploads/media/Chitwan%20National%20Park/crocodile%20in%20sauraha%20chitwan.jpg",
         attractions: ["Wildlife Safari", "Elephant Rides", "Jungle Activities"],
         weather: "Tropical, 20-30°C",
     },
@@ -1723,4 +1723,4 @@ const NepalFlightTracker = () => {
     )
 }
 
-export default NepalFlightTracker
+export default NepalFlightTracker;

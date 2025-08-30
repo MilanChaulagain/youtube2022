@@ -44,11 +44,11 @@ const Stays = () => {
 
     // Fetch featured properties
     const { data: featuredData, loading: featuredLoading } = useFetch(
-        "/hotels?featured=true&limit=4"
+        "  http://localhost:8800/api/hotels?featured=true&limit=4"
     );
 
     // Fetch property list counts
-    const { data: propertyListData } = useFetch("/hotels/countByType");
+    const { data: propertyListData } = useFetch("  http://localhost:8800/api/hotels/countByType");
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -79,25 +79,25 @@ const Stays = () => {
             return;
         }
 
-        dispatch({ 
-            type: "NEW_SEARCH", 
-            payload: { 
-                destination, 
-                dates, 
+        dispatch({
+            type: "NEW_SEARCH",
+            payload: {
+                destination,
+                dates,
                 options,
                 min,
                 max
-            } 
+            }
         });
-        
-        navigate("/hotels", { 
-            state: { 
-                destination, 
-                dates, 
+
+        navigate("/hotels", {
+            state: {
+                destination,
+                dates,
                 options,
                 min,
                 max
-            } 
+            }
         });
     };
 
@@ -117,7 +117,7 @@ const Stays = () => {
                 <div className="searchContainer">
                     <h2 className="searchTitle">Find your perfect stay</h2>
                     <p className="searchSubtitle">Search deals on hotels, homes, and much more...</p>
-                    
+
                     <div className="searchBar">
                         <div className="searchItem">
                             <div className="inputGroup">
@@ -207,6 +207,7 @@ const Stays = () => {
             </div>
 
             <div className="stayContainer">
+                <h1 className="sectionTitle">Browse by Cities</h1>
                 <Feature />
                 <h1 className="sectionTitle">Browse by property type</h1>
                 <PropertyList propertyList={propertyListData} />

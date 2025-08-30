@@ -1,292 +1,270 @@
-import React, { useEffect, useState } from "react";
-import bs from "bikram-sambat-js";
-import "./calender.css";
-import Header from "../../components/header/Header";
-import Navbar from "../../components/navbar/Navbar";
-import Footer from "../../components/footer/Footer";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './calender.css'; 
+import Navbar from '../../components/navbar/Navbar';
+import Header from '../../components/header/Header';
+import Footer from '../../components/footer/Footer';
 
-const monthsNepali = [
-    "बैशाख", "जेठ", "असार", "साउन", "भदौ", "आश्विन",
-    "कार्तिक", "मंसिर", "पौष", "माघ", "फागुन", "चैत्र"
-];
+const api = axios.create({
+  baseURL: 'http://localhost:8800/api',
+});
 
-const monthsEnglish = [
-    "Baishakh", "Jestha", "Ashadh", "Shrawan", "Bhadra", "Ashwin",
-    "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"
-];
+const NepaliCalendar = () => {
+  const [year, setYear] = useState('');
+  const [month, setMonth] = useState('');
+  const [calendarData, setCalendarData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [today, setToday] = useState(null);
+  const [events, setEvents] = useState([]);
 
-const daysNep = ["आइत", "सोम", "मंगल", "बुध", "बिहि", "शुक्र", "शनि"];
-const daysEng = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const months = [
+    { value: '1', name: 'Baisakh (April–May)' },
+    { value: '2', name: 'Jestha (May–June)' },
+    { value: '3', name: 'Ashar (June–July)' },
+    { value: '4', name: 'Shrawan (July–August)' },
+    { value: '5', name: 'Bhadra (August–September)' },
+    { value: '6', name: 'Ashoj (September–October)' },
+    { value: '7', name: 'Kartik (October–November)' },
+    { value: '8', name: 'Mangsir (November–December)' },
+    { value: '9', name: 'Poush (December–January)' },
+    { value: '10', name: 'Magh (January–February)' },
+    { value: '11', name: 'Falgun (February–March)' },
+    { value: '12', name: 'Chaitra (March–April)' },
+  ];
 
-const API_BASE = "http://localhost:8800/api";
+  const englishDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export default function BilingualNepaliCalendar() {
-    const [year, setYear] = useState(2082);
-    const [monthIndex, setMonthIndex] = useState(2); // 2 = Ashadh (असार)
-    const [todayDate, setTodayDate] = useState(8); // 8th day
-    const [events, setEvents] = useState([]);
-    const [monthData, setMonthData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [startDayOfWeek, setStartDayOfWeek] = useState(0);
+  const years = Array.from({ length: 4 }, (_, i) => (2080 + i).toString());
 
-    const updateCurrentDate = () => {
-        try {
-            // For production: uncomment this block
-            /*
-            const now = new Date();
-            const nepDate = bs.toBik(now);
-            setYear(nepDate.year);
-            setMonthIndex(nepDate.month - 1);
-            setTodayDate(nepDate.day);
-            */
+  useEffect(() => {
+    const initializeCalendar = async () => {
+      try {
+        setLoading(true);
+        const todayResponse = await api.get('/calendar/today');
+        const todayData = todayResponse.data?.data;
 
-            // For demo/testing: hardcoded today as 2082/03/08
-            setYear(2082);
-            setMonthIndex(2); // Ashadh
-            setTodayDate(8);
-        } catch (error) {
-            console.error("Error converting date:", error);
-            setYear(2082);
-            setMonthIndex(2);
-            setTodayDate(8);
+        if (todayData) {
+          setToday(todayData);
+          setYear(todayData.year.toString());
+          setMonth(todayData.month.toString());
         }
+      } catch (err) {
+        console.error('Error fetching today date:', err.message);
+        setYear('2082');
+        setMonth('4');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    useEffect(() => {
-        updateCurrentDate();
+    initializeCalendar();
+  }, []);
 
-        const minuteInterval = setInterval(updateCurrentDate, 60000);
+  useEffect(() => {
+    const fetchMonthData = async () => {
+      if (!year || !month) return;
 
-        const setupMidnightUpdate = () => {
-            const now = new Date();
-            const nextMidnight = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate() + 1,
-                0, 0, 0, 0
-            );
-            const msToMidnight = nextMidnight - now;
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await api.get(`/${year}/${month}`);
+        const data = Array.isArray(response.data) ? response.data : [];
 
-            return setTimeout(() => {
-                updateCurrentDate();
-                setupMidnightUpdate();
-            }, msToMidnight);
-        };
+        const firstDay = data[0]?.day || 'Sunday';
+        const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const startIndex = dayOrder.indexOf(firstDay);
 
-        const midnightTimeout = setupMidnightUpdate();
+        const paddedData = [...Array(startIndex).fill(null), ...data];
+        setCalendarData(paddedData);
 
-        return () => {
-            clearInterval(minuteInterval);
-            clearTimeout(midnightTimeout);
-        };
-    }, []);
-
-    useEffect(() => {
-        const fetchMonthData = async () => {
-            setLoading(true);
-            try {
-                const englishMonth = monthsEnglish[monthIndex];
-                const [monthRes, eventsRes] = await Promise.all([
-                    fetch(`${API_BASE}/month/${englishMonth}`),
-                    fetch(`${API_BASE}/month/${englishMonth}/events`)
-                ]);
-
-                const monthData = await monthRes.json();
-                const eventsData = await eventsRes.json();
-
-                setMonthData(monthData);
-                setEvents(eventsData.map(event => ({
-                    ...event,
-                    date: parseInt(event.np)
-                })));
-
-                if (monthData.length > 0) {
-                    const firstDay = monthData[0].day.toLowerCase();
-                    const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-                    setStartDayOfWeek(dayMap[firstDay] || 0);
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMonthData();
-    }, [monthIndex, year]);
-
-    const prevMonth = () => {
-        setMonthIndex(prev => {
-            if (prev === 0) {
-                setYear(y => y - 1);
-                return 11;
-            }
-            return prev - 1;
-        });
+        const monthEvents = data.filter(day => day?.event && day.event.trim() !== '');
+        setEvents(monthEvents);
+      } catch (err) {
+        console.error('Error fetching month data:', err.message);
+        setError('Failed to load calendar data. Please try again.');
+        setCalendarData([]);
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const nextMonth = () => {
-        setMonthIndex(prev => {
-            if (prev === 11) {
-                setYear(y => y + 1);
-                return 0;
-            }
-            return prev + 1;
-        });
-    };
+    fetchMonthData();
+  }, [year, month]);
 
-    const generateCalendarGrid = () => {
-        const calendarDays = [];
-        const currentMonthDays = monthData.length;
+  const handleYearChange = (e) => {
+    setYear(e.target.value);
+  };
 
-        for (let i = 0; i < startDayOfWeek; i++) {
-            calendarDays.push({
-                date: null,
-                isCurrentMonth: false,
-                isPrevMonth: true,
-            });
-        }
+  const handleMonthChange = (e) => {
+    setMonth(e.target.value);
+  };
 
-        for (let i = 0; i < currentMonthDays; i++) {
-            const day = monthData[i];
-            calendarDays.push({
-                ...day,
-                date: parseInt(day.np),
-                isCurrentMonth: true,
-                holiday: day.holiday
-            });
-        }
+  const navigateMonth = (direction) => {
+    let newMonth = parseInt(month);
+    let newYear = parseInt(year);
 
-        const totalCells = Math.ceil(calendarDays.length / 7) * 7;
-        const remainingCells = totalCells - calendarDays.length;
-        for (let i = 0; i < remainingCells; i++) {
-            calendarDays.push({
-                date: null,
-                isCurrentMonth: false,
-                isNextMonth: true,
-            });
-        }
-
-        return calendarDays;
-    };
-
-    const renderCalendarGrid = () => {
-        const calendarDays = generateCalendarGrid();
-        const rows = [];
-
-        for (let i = 0; i < calendarDays.length; i += 7) {
-            rows.push(calendarDays.slice(i, i + 7));
-        }
-
-        return (
-            <tbody>
-                {rows.map((week, wi) => (
-                    <tr key={wi}>
-                        {week.map((day, di) => (
-                            <td
-                                key={di}
-                                className={`calendar-cell ${day.isCurrentMonth ? "current-month" : "other-month"} 
-                                ${day.holiday ? "full-holiday" : ""}
-                                ${day.day === "sat" ? "saturday" : ""}
-                                ${day.date === todayDate && day.isCurrentMonth ? "full-today" : ""}`}
-                            >
-                                {day.date && <div className="date-number">{day.date}</div>}
-                            </td>
-                        ))}
-                    </tr>
-                ))}
-            </tbody>
-        );
-    };
-
-    const parseEvent = (eventStr) => {
-        if (eventStr.includes("(") && eventStr.includes(")")) {
-            const parts = eventStr.split("(");
-            const nepali = parts[0].trim();
-            const english = parts[1].replace(")", "").trim();
-            return { nepali, english };
-        }
-        return { nepali: eventStr, english: eventStr };
-    };
-
-    if (loading) {
-        return (
-            <div className="calendar-container">
-                <div className="loading-message">Loading calendar...</div>
-            </div>
-        );
+    if (direction === 'prev') {
+      newMonth -= 1;
+      if (newMonth < 1) {
+        newMonth = 12;
+        newYear -= 1;
+      }
+    } else {
+      newMonth += 1;
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear += 1;
+      }
     }
 
-    const currentMonthEvents = events.filter(e => e.date);
-    const totalDays = monthData.length;
+    setYear(newYear.toString());
+    setMonth(newMonth.toString());
+  };
+
+  const isToday = (day) => {
+    if (!today || !day) return false;
+    return (
+      day.np === today.np &&
+      parseInt(month) === today.month &&
+      parseInt(year) === today.year
+    );
+  };
+
+  const isHoliday = (day) => {
+    return day?.isholiday;
+  };
+
+  const renderCalendar = () => {
+    if (loading) return <div className="loading">Loading...</div>;
+    if (error) return <div className="error">{error}</div>;
+    if (!calendarData || calendarData.length === 0) return <div className="error">No calendar data available</div>;
+
+    const weeks = [];
+    for (let i = 0; i < calendarData.length; i += 7) {
+      weeks.push(calendarData.slice(i, i + 7));
+    }
 
     return (
-        <>
-            <Navbar />
-            <Header />
-            <div className="calendar-container">
-                <div className="calendar-header">
-                    <button className="nav-button" onClick={prevMonth}>⟨</button>
-                    <div className="header-info">
-                        <h2 className="main-title">{year} / {monthsEnglish[monthIndex]}</h2>
-                        <div className="sub-title">
-                            {monthsNepali[monthIndex]} {todayDate}, {daysNep[new Date().getDay()]}
-                        </div>
-                    </div>
-                    <button className="nav-button" onClick={nextMonth}>⟩</button>
-                </div>
-
-                <table className="calendar-table">
-                    <thead>
-                        <tr>
-                            {daysNep.map((d, i) => (
-                                <th key={i} className={`day-header ${i === 6 ? "saturday-header" : ""}`}>
-                                    <div className="day-nepali">{d}</div>
-                                    <div className="day-english">{daysEng[i]}</div>
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    {renderCalendarGrid()}
-                </table>
-
-                <div className="events-section">
-                    <h3 className="events-title">📋 Events for {monthsEnglish[monthIndex]} {year}</h3>
-                    {currentMonthEvents.length === 0 ? (
-                        <div className="no-events">No events scheduled for this month.</div>
-                    ) : (
-                        <div className="events-grid">
-                            {currentMonthEvents
-                                .sort((a, b) => a.date - b.date)
-                                .map((event, i) => {
-                                    const { nepali: eventNepali, english: eventEnglish } = parseEvent(event.event);
-                                    return (
-                                        <div key={i} className="event-card">
-                                            <div className="event-date-badge">{event.date}</div>
-                                            <div className="event-details">
-                                                <div className="event-title-nepali">{eventNepali}</div>
-                                                <div className="event-title-english">{eventEnglish}</div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                    )}
-                </div>
-
-                <div className="legend">
-                    <div className="legend-item">
-                        <span className="legend-dot saturday-dot">●</span> Saturday
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-dot today-dot">●</span> Today
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-dot holiday-dot">●</span> Public Holiday
-                    </div>
-                </div>
-            </div>
-            <Footer />
-        </>
+      <table className="calendar-grid">
+        <thead>
+          <tr>
+            {englishDays.map((day, index) => (
+              <th key={index}>{day}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {weeks.map((week, weekIndex) => (
+            <tr key={weekIndex}>
+              {week.map((day, dayIndex) => (
+                <td
+                  key={dayIndex}
+                  className={`
+                    day-cell
+                    ${!day ? 'empty' : ''}
+                    ${day && isToday(day) ? 'today' : ''}
+                    ${day && isHoliday(day) ? 'holiday' : ''}
+                  `}
+                >
+                  {day ? (
+                    <>
+                      <div className="day-number">{day.np}</div>
+                      <div className="english-date">{day.en}</div>
+                    </>
+                  ) : null}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     );
-}
+  };
+
+  const renderEvents = () => {
+    if (events.length === 0) return null;
+
+    return (
+      <div className="events-container">
+        <h3>Events this month:</h3>
+        <ul className="events-list">
+          {events.map((event, index) => (
+            <li key={index}>
+              <span className="event-date">{event.np_date}:</span> {event.event}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  const currentMonthName = months.find(m => m.value === month)?.name || '';
+  const currentYear = year;
+
+  return (
+    <>
+      <Navbar />
+      <Header />
+      <div className="nepali-calendar">
+        <div className="calendar-header">
+          <h1>Nepali Calendar</h1>
+          <div className="controls">
+            <div className="navigation">
+              <button onClick={() => navigateMonth('prev')}>&lt; Previous</button>
+              <div className="month-year-display">
+                {currentMonthName} {currentYear}
+              </div>
+              <button onClick={() => navigateMonth('next')}>
+                Next &gt;
+              </button>
+            </div>
+
+            <div className="dropdowns">
+              <select value={year} onChange={handleYearChange}>
+                {years.map(y => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+              <select value={month} onChange={handleMonthChange}>
+                {months.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {renderCalendar()}
+
+        {renderEvents()}
+
+        <div className="calendar-footer">
+          <div className="legend">
+            <div className="legend-item">
+              <span className="today-marker"></span> Today
+            </div>
+            <div className="legend-item">
+              <span className="holiday-marker"></span> Holiday
+            </div>
+          </div>
+          {today && (
+            <div className="today-info">
+              Today: {today.np_date}
+              <span className="english-today"> ({today.en_date})</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <Footer />
+    </>
+
+  );
+};
+
+export default NepaliCalendar;

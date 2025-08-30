@@ -5,14 +5,14 @@ import "./banner.css";
 const bannerData = [
     {
         id: "1",
-        image: "/images/1.png",
+        image: "/images/1.jpg",
         sponsor: "Explore Nepals history and culture with us! and hidden gems of Nepalese Territory",
         title: "Discover Nepal History",
         description: "Find out why travelers like you are raving about Nepal",
     },
     {
         id: "2",
-        image: "/images/5.png",
+        image: "/images/2.jpg",
         sponsor: "Explore and Visit the waterfall and lakes of Nepal",
         title: "Discover Nepal Waterfalls",
         description: "Find out why travelers like you are raving about Nepal",

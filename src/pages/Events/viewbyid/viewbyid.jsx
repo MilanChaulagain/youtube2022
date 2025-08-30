@@ -146,36 +146,6 @@ const ChadParbaDetail = () => {
                         </div>
                     </div>
                 </div>
-
-                <div className="related-events">
-                    <h2>Other Nepali Festivals</h2>
-                    <div className="events-grid">
-                        {[1, 2, 3].map((item) => (
-                            <div className="event-card" key={item}>
-                                <div className="card-header">
-                                    <div className="date-badge">
-                                        <span className="month">Shrawan</span>
-                                        <span className="day">{15 + item}</span>
-                                    </div>
-                                    <div className="category-tag">Festival</div>
-                                </div>
-                                <div className="card-content">
-                                    <h3>Sample Festival {item}</h3>
-                                    <p>This is a placeholder for a related festival description that might interest you...</p>
-                                </div>
-                                <div className="card-footer">
-                                    <Link to="#" className="read-more-link">
-                                        <span>Learn More</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M5 12h14" />
-                                            <path d="M12 5l7 7-7 7" />
-                                        </svg>
-                                    </Link>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
             <Footer />
         </>

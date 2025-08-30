@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../../utils/api"; // axios instance with credentials/token
 import {
-    FaSearch,
     FaStar,
     FaMapMarkerAlt,
     FaBuilding,
@@ -27,7 +26,6 @@ const ReviewPage = () => {
     const [authChecked, setAuthChecked] = useState(false);
     const [message, setMessage] = useState(null);
     const [messageType, setMessageType] = useState(null);
-
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -58,25 +56,27 @@ const ReviewPage = () => {
         }
     };
 
-    const fetchUserReviews = async () => {
+    
+    const fetchUserReviews = useCallback(async () => {
         if (!user || !user._id) return;
         setIsLoading(true);
         setMessage(null);
         try {
             const res = await api.get(`/review/user/${user._id}`);
-            setUserReviews(res.data);
+            setUserReviews(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Fetch review error:", err.response || err);
             setMessage("Failed to load your reviews.");
             setMessageType("error");
+            setUserReviews([]);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         if (user) fetchUserReviews();
-    }, [user]);
+    }, [user, fetchUserReviews]);
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
@@ -91,7 +91,6 @@ const ReviewPage = () => {
                 comment: comment.trim(),
             });
 
-            // Detect review creation regardless of response format
             const reviewId = res?.data?._id || res?.data?.review?._id;
             if (reviewId) {
                 setRating(0);
@@ -116,20 +115,6 @@ const ReviewPage = () => {
             setMessage(null);
             setMessageType(null);
         }, 4000);
-    };
-
-    const handleDeleteReview = async (reviewId) => {
-        if (!window.confirm("Are you sure you want to delete this review?")) return;
-        try {
-            await api.delete(`/review/${reviewId}`);
-            await fetchUserReviews();
-            setMessage("Review deleted.");
-            setMessageType("success");
-        } catch (err) {
-            console.error("Delete error:", err.response || err);
-            setMessage("Failed to delete review.");
-            setMessageType("error");
-        }
     };
 
     const getIcon = (type) =>
@@ -208,8 +193,8 @@ const ReviewPage = () => {
                     {message && (
                         <div
                             className={`writereview-alert-message ${messageType === "success"
-                                    ? "writereview-alert-success"
-                                    : "writereview-alert-error"
+                                ? "writereview-alert-success"
+                                : "writereview-alert-error"
                                 }`}
                         >
                             {message}
@@ -252,7 +237,7 @@ const ReviewPage = () => {
                     {userReviews.length === 0 ? (
                         <p>No reviews yet.</p>
                     ) : (
-                        userReviews.map((rev) => (
+                        (userReviews || []).map((rev) => (
                             <div key={rev._id} className="writereview-review-item">
                                 <strong>{rev.reviewedModel}</strong>: {rev.reviewedItem?.name || "Unknown"}
                                 <div>
@@ -265,12 +250,6 @@ const ReviewPage = () => {
                                 </div>
                                 <p>{rev.comment}</p>
                                 <small>{new Date(rev.createdAt).toLocaleDateString()}</small>
-                                <button
-                                    onClick={() => handleDeleteReview(rev._id)}
-                                    className="writereview-delete-btn"
-                                >
-                                    Delete
-                                </button>
                             </div>
                         ))
                     )}

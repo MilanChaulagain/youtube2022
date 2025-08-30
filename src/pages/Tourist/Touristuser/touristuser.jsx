@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaMapMarkerAlt, FaPhoneAlt, FaClock, FaStar, FaWater } from "react-icons/fa";
+import { FaMapMarkerAlt, FaPhoneAlt, FaClock, FaStar, FaWater, FaWhatsapp } from "react-icons/fa";
 import { GiMountainCave, GiElephant } from "react-icons/gi";
 import { MdTempleBuddhist } from "react-icons/md";
 import { PiTShirtFill } from "react-icons/pi";
@@ -8,22 +8,116 @@ import { GiNoodles } from "react-icons/gi";
 import { FaMoneyBillWave } from "react-icons/fa";
 import { GiHiking } from "react-icons/gi";
 import { BsFillCalendarEventFill } from "react-icons/bs";
-
 import Navbar from "../../../components/navbar/Navbar";
 import Header from "../../../components/header/Header";
 import Footer from "../../../components/footer/Footer";
-import "./touristuser.css"; // Assuming you have a CSS file for styling
+import "./touristuser.css";
+
+// Add this line to define BASE_URL
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8800";
+
+// Star Rating Component
+const StarRating = ({ rating, size = 16, reviewCount = 0 }) => {
+  if (rating === null || rating === undefined) return null;
+  
+  return (
+    <div className="star-rating">
+      {[...Array(5)].map((_, index) => (
+        <FaStar
+          key={index}
+          size={size}
+          style={{
+            fill: index < Math.floor(rating) ? "#FFD700" : "#ccc",
+            color: index < Math.floor(rating) ? "#FFD700" : "#ccc"
+          }}
+        />
+      ))}
+      <span className="rating-text">({rating.toFixed(1)}{reviewCount > 0 ? `, ${reviewCount} reviews` : ''})</span>
+    </div>
+  );
+};
+
+// Review Component for Guides
+const GuideReviewSection = ({ guideId }) => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [averageRating, setAverageRating] = useState(null);
+
+  useEffect(() => {
+    const fetchReviewData = async () => {
+      if (!guideId) return;
+      
+      setLoading(true);
+      try {
+        // Get all reviews and filter for this guide
+        const reviewsResponse = await fetch(`${BASE_URL}/api/review/`);
+        if (reviewsResponse.ok) {
+          const reviewsData = await reviewsResponse.json();
+          
+          // Handle different response structures
+          let allReviews = [];
+          if (Array.isArray(reviewsData)) {
+            allReviews = reviewsData;
+          } else if (reviewsData.data && Array.isArray(reviewsData.data)) {
+            allReviews = reviewsData.data;
+          }
+          
+          // Filter reviews for this specific guide
+          const guideReviews = allReviews.filter(review => 
+            review.reviewedItem && 
+            review.reviewedItem._id === guideId && 
+            review.reviewedModel === "TouristGuide"
+          );
+          
+          setReviews(guideReviews);
+          
+          // Calculate average rating
+          if (guideReviews.length > 0) {
+            const totalRating = guideReviews.reduce((sum, review) => sum + review.rating, 0);
+            setAverageRating(totalRating / guideReviews.length);
+          } else {
+            setAverageRating(null);
+          }
+        } else {
+          console.error("Failed to fetch reviews:", reviewsResponse.status);
+        }
+      } catch (error) {
+        console.error("Error fetching review data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviewData();
+  }, [guideId]);
+
+  if (loading) return <div className="reviews-loading">Loading reviews...</div>;
+  
+  return (
+    <div className="guide-reviews-section">
+      {averageRating !== null ? (
+        <div className="guide-average-rating">
+          <StarRating rating={averageRating} size={14} reviewCount={reviews.length} />
+        </div>
+      ) : (
+        <div className="no-reviews-text">No reviews yet</div>
+      )}
+    </div>
+  );
+};
+
 const UserDashboard = () => {
     const [guides, setGuides] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("guides");
+    const [showContactOptions, setShowContactOptions] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchGuides = async () => {
             try {
-                const response = await fetch("http://localhost:8800/api/touristguide", {
+                const response = await fetch(`${BASE_URL}/api/touristguide`, {
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
                 });
@@ -42,6 +136,19 @@ const UserDashboard = () => {
 
         fetchGuides();
     }, []);
+
+    const handleWhatsAppClick = (phoneNumber) => {
+        const cleanedNumber = phoneNumber.replace(/\D/g, '');
+        const formattedNumber = cleanedNumber.startsWith('977') ? cleanedNumber :
+            cleanedNumber.startsWith('9') ? `977${cleanedNumber}` :
+                `977${cleanedNumber}`;
+        window.open(`https://wa.me/${formattedNumber}`, '_blank');
+    };
+
+
+    const toggleContactOptions = (guideId) => {
+        setShowContactOptions(showContactOptions === guideId ? null : guideId);
+    };
 
     return (
         <>
@@ -104,7 +211,7 @@ const UserDashboard = () => {
                                                 />
                                             )}
                                             <div className="touristuser-guide-rating">
-                                                <FaStar color="#f5c518" /> 4.8
+                                                <GuideReviewSection guideId={guide._id} />
                                             </div>
                                         </div>
                                         <div className="touristuser-guide-info">
@@ -135,14 +242,37 @@ const UserDashboard = () => {
                                             <div className="touristuser-guide-contact">
                                                 <FaPhoneAlt /> {guide.contactNumber}
                                             </div>
-                                            <button
-                                                className="touristuser-contact-button"
-                                                onClick={() =>
-                                                    navigate(`/chat/${guide._id}`, { state: { guide } })
-                                                }
-                                            >
-                                                Contact Guide
-                                            </button>
+                                            <div className="touristuser-contact-options-container">
+                                                <button
+                                                    className="touristuser-contact-button"
+                                                    onClick={() => toggleContactOptions(guide._id)}
+                                                >
+                                                    Contact Guide
+                                                </button>
+
+                                                {showContactOptions === guide._id && (
+                                                    <div className="touristuser-contact-options">
+                                                        <button
+                                                            className="touristuser-chat-option"
+                                                            onClick={() => {
+                                                                navigate(`/chat/${guide._id}`, { state: { guide } });
+                                                                setShowContactOptions(null);
+                                                            }}
+                                                        >
+                                                            Chat here
+                                                        </button>
+                                                        <button
+                                                            className="touristuser-whatsapp-option"
+                                                            onClick={() => {
+                                                                handleWhatsAppClick(guide.contactNumber);
+                                                                setShowContactOptions(null);
+                                                            }}
+                                                        >
+                                                            <FaWhatsapp /> WhatsApp
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -162,7 +292,7 @@ const UserDashboard = () => {
                                 <p>Journey to the base of the world's highest mountain</p>
                                 <div className="touristuser-attraction-stats">
                                     <span><GiMountainCave /> Trekking</span>
-                                    <span><FaStar /> 4.9 (1.2k reviews)</span>
+                                    <span className="attraction-rating"><StarRating rating={4.9} size={14} reviewCount={1200} /></span>
                                 </div>
                             </div>
                             <div className="touristuser-attraction-card">
@@ -171,7 +301,7 @@ const UserDashboard = () => {
                                 <p>Sacred Hindu temple complex on the banks of the Bagmati River</p>
                                 <div className="touristuser-attraction-stats">
                                     <span><MdTempleBuddhist /> Cultural</span>
-                                    <span><FaStar /> 4.7 (850 reviews)</span>
+                                    <span className="attraction-rating"><StarRating rating={4.7} size={14} reviewCount={850} /></span>
                                 </div>
                             </div>
                             <div className="touristuser-attraction-card">
@@ -180,7 +310,7 @@ const UserDashboard = () => {
                                 <p>Beautiful lakes with stunning views of the Annapurna range</p>
                                 <div className="touristuser-attraction-stats">
                                     <span><FaWater /> Nature</span>
-                                    <span><FaStar /> 4.8 (1.1k reviews)</span>
+                                    <span className="attraction-rating"><StarRating rating={4.8} size={14} reviewCount={1100} /></span>
                                 </div>
                             </div>
                             <div className="touristuser-attraction-card">
@@ -189,7 +319,7 @@ const UserDashboard = () => {
                                 <p>UNESCO World Heritage site with diverse wildlife</p>
                                 <div className="touristuser-attraction-stats">
                                     <span><GiElephant /> Wildlife</span>
-                                    <span><FaStar /> 4.6 (930 reviews)</span>
+                                    <span className="attraction-rating"><StarRating rating={4.6} size={14} reviewCount={930} /></span>
                                 </div>
                             </div>
                         </div>
@@ -224,6 +354,7 @@ const UserDashboard = () => {
                         </div>
                     </section>
                 )}
+
                 {/* Events Section */}
                 {activeTab === "events" && (
                     <section className="touristuser-section touristuser-events-section">

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -15,12 +17,12 @@ import {
     FaImage,
     FaTags
 } from "react-icons/fa";
+import { FiAlertTriangle } from "react-icons/fi";
 
 import "./createblog.css";
 import Navbar from "../../../components/navbar/Navbar";
 import Header from "../../../components/header/Header";
 import Footer from "../../../components/footer/Footer";
-import { FiAlertTriangle } from "react-icons/fi";
 
 const FONT_FAMILIES = [
     { label: "Default", value: "" },
@@ -63,6 +65,12 @@ const quillFormats = [
 ];
 
 const CreateBlog = () => {
+    // All hooks at the very top (no hooks after returns!)
+    const navigate = useNavigate();
+
+    const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false);
+
     const [title, setTitle] = useState("");
     const [authorName, setAuthorName] = useState("");
     const [content, setContent] = useState("");
@@ -73,15 +81,24 @@ const CreateBlog = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [fontFamily, setFontFamily] = useState("");
     const [fontSize, setFontSize] = useState("normal");
-    const navigate = useNavigate();
 
+    // Load user info from localStorage & init authorName
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            navigate("/login");
-        }
-    }, [navigate]);
+        const storedUser = localStorage.getItem("user");
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        setUser(parsedUser);
+        setAuthChecked(true);
+        if (parsedUser?.name) setAuthorName(parsedUser.name);
+    }, []);
 
+    // Auth checks with early returns AFTER hooks
+    if (!authChecked) return <p>Checking authentication...</p>;
+    if (!user) {
+        window.location.href = "/login";
+        return null;
+    }
+
+    // Handle image selection & preview
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -90,16 +107,16 @@ const CreateBlog = () => {
         }
     };
 
+    // Upload image to Cloudinary
     const handleImageUpload = async () => {
         if (!imageFile) return "";
 
         const formData = new FormData();
         formData.append("file", imageFile);
-        formData.append("upload_preset", "upload");
+        formData.append("", "");
 
         try {
             const res = await axios.post(
-                "https://api.cloudinary.com/v1_1/doqbzwm1o/image/upload",
                 formData
             );
             return res.data.secure_url;
@@ -110,6 +127,7 @@ const CreateBlog = () => {
         }
     };
 
+    // Form submit handler
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -142,16 +160,12 @@ const CreateBlog = () => {
                     fontFamily,
                     fontSize,
                 },
-                {
-                    withCredentials: true,
-                }
+                { withCredentials: true }
             );
 
             if (res.data.success) {
                 setMessage({ text: "Blog created successfully!", type: "success" });
-                setTimeout(() => {
-                    navigate("/blog");
-                }, 2000);
+                setTimeout(() => navigate("/blog"), 2000);
             } else {
                 setMessage({ text: "Something went wrong", type: "error" });
             }

@@ -3,19 +3,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./place_banner.css";
 
-const originalDestinations = [
-    { id: 1, name: "Basantapur Darbar Square, Kathmandu", image: "/images/1.png" },
-    { id: 2, name: "Taragaon Next", image: "/images/2.png" },
-    { id: 3, name: "Chandragiri Temple", image: "/images/3.png" },
-    { id: 4, name: "Shree Kaal Bhairav Temple", image: "/images/4.png" },
-    { id: 5, name: "Tin Tale Waterfall", image: "/images/5.png" },
-    { id: 6, name: "Kaleshwor Mahadev Temple", image: "/images/6.png" },
-    { id: 7, name: "Buddha Stupa", image: "/images/7.png" },
-    { id: 8, name: "Pashupatinath Temple", image: "/images/8.png" },
-    { id: 9, name: "Bhaktapur Darbar Square", image: "/images/9.png" },
-    { id: 10, name: "Patan Krishna Temple", image: "/images/10.png" },
-];
-
 export default function PlaceBanner() {
     const containerRef = useRef(null);
     const [destinations, setDestinations] = useState([]);
@@ -23,18 +10,35 @@ export default function PlaceBanner() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const cloneStart = originalDestinations.slice(-3);
-        const cloneEnd = originalDestinations.slice(0, 3);
-        setDestinations([...cloneStart, ...originalDestinations, ...cloneEnd]);
+        fetch("http://localhost:8800/api/place")
+            .then((res) => res.json())
+            .then((data) => {
+                console.log("API response:", data);
 
-        setTimeout(() => {
-            if (containerRef.current) {
-                const container = containerRef.current;
-                const firstCard = container.children[3];
-                cardWidth.current = firstCard.offsetWidth;
-                container.scrollLeft = firstCard.offsetLeft;
-            }
-        }, 100);
+                const placesArray = data.data;
+                if (!Array.isArray(placesArray)) {
+                    throw new Error("API response does not contain an array of places");
+                }
+
+                const cloneStart = placesArray.slice(-3);
+                const cloneEnd = placesArray.slice(0, 3);
+
+                setDestinations([...cloneStart, ...placesArray, ...cloneEnd]);
+
+                setTimeout(() => {
+                    if (containerRef.current) {
+                        const container = containerRef.current;
+                        const firstCard = container.children[3];
+                        if (firstCard) {
+                            cardWidth.current = firstCard.offsetWidth;
+                            container.scrollLeft = 0;
+                        }
+                    }
+                }, 100);
+            })
+            .catch((err) => {
+                console.error("Failed to fetch places:", err);
+            });
     }, []);
 
     const handleScroll = () => {
@@ -62,10 +66,8 @@ export default function PlaceBanner() {
         }
     };
 
-    const handleExploreClick = (destinationName) => {
-        // You can log or use the destinationName if needed
-        console.log(`Exploring ${destinationName}`);
-        navigate("/places");
+    const handleExploreClick = (id) => {
+        navigate(`/placedetails/${id}`);
     };
 
     return (
@@ -79,9 +81,9 @@ export default function PlaceBanner() {
 
                 <div className="carousel" ref={containerRef} onScroll={handleScroll}>
                     {destinations.map((destination, index) => (
-                        <div key={`${destination.id}-${index}`} className="card">
+                        <div key={`${destination._id}-${index}`} className="card">
                             <img
-                                src={destination.image}
+                                src={destination.img}
                                 alt={destination.name}
                                 className="card-image"
                             />
@@ -89,7 +91,7 @@ export default function PlaceBanner() {
                                 <div className="card-title">{destination.name}</div>
                                 <button
                                     className="place-explore-button"
-                                    onClick={() => handleExploreClick(destination.name)}
+                                    onClick={() => handleExploreClick(destination._id)}
                                 >
                                     Explore Now
                                 </button>

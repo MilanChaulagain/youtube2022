@@ -1,561 +1,705 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useState, useContext, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { User, Mail, MapPin, Phone, Edit, Save, X, LogOut, Camera, Eye, EyeOff, Lock, Calendar } from "lucide-react"
-import axios from "axios"
-import "./profile.css"
-import { AuthContext } from "../../context/AuthContext"
+import React, { useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, Mail, MapPin, Phone, Edit, Save, X, LogOut, Camera, Eye, EyeOff, Lock, Calendar, FlagTriangleRight } from "lucide-react";
+import { IoMdDoneAll } from "react-icons/io";
+import axios from "axios";
+import "./profile.css";
+import { AuthContext } from "../../context/AuthContext";
+import Footer from "../../components/footer/Footer";
+import Navbar from "../../components/navbar/Navbar"; 
 
+import "./profile.css"; 
 const UserProfile = () => {
-    const { user, dispatch } = useContext(AuthContext)
-    const navigate = useNavigate()
+    const { user, dispatch } = useContext(AuthContext);
+    const navigate = useNavigate();
 
-    const [editMode, setEditMode] = useState(false)
-    const [imageFile, setImageFile] = useState(null)
-    const [imagePreview, setImagePreview] = useState(null)
-    const [localError, setLocalError] = useState("")
-    const [successMessage, setSuccessMessage] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
-    const [activeTab, setActiveTab] = useState("personal")
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-    const [showNewPassword, setShowNewPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [editMode, setEditMode] = useState({
+        personal: false,
+        security: false
+    });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState("personal");
+    const [passwordVisibility, setPasswordVisibility] = useState({
+        current: false,
+        new: false,
+        confirm: false
+    });
 
-    const [profileData, setProfileData] = useState({
-        username: "",
-        email: "",
-        country: "",
-        city: "",
-        phone: "",
-        img: "",
-    })
-
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-    })
-
-    const CLOUD_NAME = "doqbzwm1o"
-    const UPLOAD_PRESET = "upload"
-
+    const [formData, setFormData] = useState({
+        personal: {
+            username: "",
+            email: "",
+            country: "",
+            city: "",
+            phone: "",
+            img: ""
+        },
+        security: {
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+        }
+    });
     const countries = [
-        "United States",
-        "Canada",
-        "United Kingdom",
-        "Australia",
-        "Germany",
-        "France",
-        "Japan",
-        "Brazil",
-        "India",
-        "China",
-        "Mexico",
-        "Italy",
-        "Spain",
-        "Netherlands",
-        "Sweden",
-        "Norway",
-        "Denmark",
-        "Finland",
-    ]
+        "Nepal","United States", "Canada", "United Kingdom", "Australia", "Germany",
+        "France", "Japan", "Brazil", "India", "China", "Mexico", "Italy",
+        "Spain", "Netherlands", "Sweden", "Norway", "Denmark", "Finland"
+    ];
 
-    // Load user data when component mounts
     useEffect(() => {
-        if (user) {
-            setProfileData({
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+
+        setFormData({
+            personal: {
                 username: user.username || "",
                 email: user.email || "",
                 country: user.country || "",
                 city: user.city || "",
                 phone: user.phone || "",
-                img: user.img || "",
-            })
-            setImagePreview(user.img || null)
-        } else {
-            // Redirect to login if no user
-            navigate("/login")
-        }
-    }, [user, navigate])
-
-    const handleChange = (e) => {
-        const { id, value } = e.target
-        setProfileData((prev) => ({ ...prev, [id]: value }))
-    }
-
-    const handlePasswordChange = (e) => {
-        const { id, value } = e.target
-        setPasswordData((prev) => ({ ...prev, [id]: value }))
-    }
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0]
-        if (file) {
-            setImageFile(file)
-            setImagePreview(URL.createObjectURL(file))
-        }
-    }
-
-    const uploadImageToCloudinary = async () => {
-        const data = new FormData()
-        data.append("file", imageFile)
-        data.append("upload_preset", UPLOAD_PRESET)
-
-        try {
-            const res = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, data)
-            return res.data.secure_url
-        } catch (err) {
-            console.error("Image upload failed:", err)
-            return null
-        }
-    }
-
-    const handleProfileUpdate = async (e) => {
-        e.preventDefault()
-        setLocalError("")
-        setSuccessMessage("")
-        setIsLoading(true)
-
-        try {
-            let imageUrl = profileData.img
-            if (imageFile) {
-                imageUrl = await uploadImageToCloudinary()
-                if (!imageUrl) {
-                    setLocalError("Image upload failed.")
-                    setIsLoading(false)
-                    return
-                }
-            }
-
-            // Update user profile
-            const response = await axios.put(
-                "/users/update",
-                {
-                    ...profileData,
-                    img: imageUrl,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                },
-            )
-
-            // Update context with new user data
-            dispatch({ type: "LOGIN_SUCCESS", payload: response.data })
-            setSuccessMessage("Profile updated successfully!")
-            setEditMode(false)
-        } catch (err) {
-            setLocalError(err.response?.data?.message || "Failed to update profile.")
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handlePasswordUpdate = async (e) => {
-        e.preventDefault()
-        setLocalError("")
-        setSuccessMessage("")
-        setIsLoading(true)
-
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            setLocalError("New passwords do not match.")
-            setIsLoading(false)
-            return
-        }
-
-        if (passwordData.newPassword.length < 8) {
-            setLocalError("Password must be at least 8 characters long.")
-            setIsLoading(false)
-            return
-        }
-
-        try {
-            // Update password
-            await axios.put(
-                "/users/change-password",
-                {
-                    currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                },
-            )
-
-            setSuccessMessage("Password updated successfully!")
-            setPasswordData({
+                img: user.img || ""
+            },
+            security: {
                 currentPassword: "",
                 newPassword: "",
-                confirmPassword: "",
-            })
-        } catch (err) {
-            setLocalError(err.response?.data?.message || "Failed to update password.")
-        } finally {
-            setIsLoading(false)
+                confirmPassword: ""
+            }
+        });
+        setImagePreview(user.img || null);
+    }, [user, navigate]);
+
+    const handleChange = (e, formType) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [formType]: {
+                ...prev[formType],
+                [id]: value
+            }
+        }));
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.size > 5 * 1024 * 1024) {
+            setError("Image size must be less than 5MB");
+            return;
         }
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    // const uploadImageToCloudinary = async () => {
+    //     if (!imageFile) return null;
+
+    //     const data = new FormData();
+    //     data.append("file", imageFile);
+    //     data.append("","");
+
+    //     try {
+    //         const res = await axios.post(
+    //             data
+    //         );
+    //         return res.data.secure_url;
+    //     } catch (err) {
+    //         console.error("Image upload failed:", err);
+    //         setError("Failed to upload image. Please try again.");
+    //         return null;
+    //     }
+    // };
+
+const uploadImageToCloudinary = async () => {
+    if (!imageFile) return null;
+
+    // Cloudinary configuration - replace with your actual values
+    const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "your_cloud_name";
+    const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "your_upload_preset";
+
+    const data = new FormData();
+    data.append("file", imageFile);
+    data.append("upload_preset", UPLOAD_PRESET); // Required
+    
+
+    try {
+        console.log("Uploading image to Cloudinary...");
+        console.log("Cloud Name:", CLOUD_NAME);
+        console.log("Upload Preset:", UPLOAD_PRESET);
+        
+        const res = await axios.post(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+            data,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round(
+                        (progressEvent.loaded * 100) / progressEvent.total
+                    );
+                    console.log(`Upload progress: ${percentCompleted}%`);
+                },
+            }
+        );
+
+        console.log("Cloudinary upload successful:", res.data);
+        return res.data.secure_url;
+        
+    } catch (err) {
+        console.error("Image upload failed:", err);
+        console.error("Error response:", err.response?.data);
+        console.error("Error message:", err.message);
+        setError("Failed to upload image. Please try again.");
+        return null;
     }
+};
+
+    const handleProfileUpdate = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSuccessMessage("");
+
+        // Validate required fields
+        if (!formData.personal.username || !formData.personal.email) {
+            setError("Username and email are required");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            let imageUrl = formData.personal.img;
+            if (imageFile) {
+                // imageUrl = await uploadImageToCloudinary();
+                // if (!imageUrl) {
+                //     setIsLoading(false);
+                //     return;
+                // }
+            }
+
+            const response = await axios.put(
+                `http://localhost:8800/api/users/update/${user._id}`,
+                {
+                    ...formData.personal,
+                    img: imageUrl
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+
+            dispatch({ type: "LOGIN_SUCCESS", payload: response.data });
+            setSuccessMessage("Profile updated successfully!");
+            setEditMode({ ...editMode, personal: false });
+        } catch (err) {
+            const errorMsg = err.response?.data?.message ||
+                err.response?.data?.error ||
+                "Failed to update profile. Please try again.";
+            setError(errorMsg);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+//     const handleProfileUpdate = async (e) => {
+//     e.preventDefault();
+//     setError("");
+//     setSuccessMessage("");
+
+//     // Validate required fields
+//     if (!formData.personal.username || !formData.personal.email) {
+//         setError("Username and email are required");
+//         return;
+//     }
+
+//     setIsLoading(true);
+
+//     try {
+//         let imageUrl = formData.personal.img;
+//         if (imageFile) {
+//             // console.log("Starting image upload...");
+//             // imageUrl = await uploadImageToCloudinary();
+//             // if (!imageUrl) {
+//             //     setIsLoading(false);
+//             //     return;
+//             // }
+//             console.log("Image uploaded successfully:", imageUrl);
+//         }
+
+//         console.log("Sending update request to server...");
+//         console.log("Formdata", user._id);
+//         const response = await axios.put(
+//             `http://localhost:8800/api/users/update/${user._id}`, // Add full URL
+//             {
+//                 ...formData.personal,
+//                 img: imageUrl
+//             },
+//             {
+//                 withCredentials: true,
+//                 headers: {
+//                     Authorization: `Bearer ${localStorage.getItem("token")}`,
+//                     "Content-Type": "application/json"
+//                 }
+//             }
+//         );
+
+//         console.log("Server response:", response.data);
+//         dispatch({ type: "LOGIN_SUCCESS", payload: response.data });
+//         setSuccessMessage("Profile updated successfully!");
+//         setEditMode({ ...editMode, personal: false });
+        
+//     } catch (err) {
+//         console.error("Profile update error:", err);
+//         console.error("Error response:", err.response?.data);
+        
+//         const errorMsg = err.response?.data?.message ||
+//             err.response?.data?.error ||
+//             err.message ||
+//             "Failed to update profile. Please try again.";
+//         setError(errorMsg);
+//     } finally {
+//         setIsLoading(false);
+//     }
+// };
+
+    const handlePasswordUpdate = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSuccessMessage("");
+        setIsLoading(true);
+
+        // Validate password fields
+        if (formData.security.newPassword !== formData.security.confirmPassword) {
+            setError("New passwords do not match");
+            setIsLoading(false);
+            return;
+        }
+
+        if (formData.security.newPassword.length < 8) {
+            setError("Password must be at least 8 characters");
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            await axios.put(
+                "/api/users/change-password",
+                {
+                    currentPassword: formData.security.currentPassword,
+                    newPassword: formData.security.newPassword
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+
+            setSuccessMessage("Password updated successfully!");
+            setFormData({
+                ...formData,
+                security: {
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                }
+            });
+            setEditMode({ ...editMode, security: false });
+        } catch (err) {
+            const errorMsg = err.response?.data?.message ||
+                err.response?.data?.error ||
+                "Failed to update password. Please try again.";
+            setError(errorMsg);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleLogout = () => {
-        dispatch({ type: "LOGOUT" })
-        localStorage.removeItem("token")
-        navigate("/login")
-    }
+        dispatch({ type: "LOGOUT" });
+        localStorage.removeItem("token");
+        navigate("/login");
+    };
 
-    const cancelEdit = () => {
-        setEditMode(false)
-        setImageFile(null)
-        // Reset to original user data
+    const togglePasswordVisibility = (field) => {
+        setPasswordVisibility(prev => ({
+            ...prev,
+            [field]: !prev[field]
+        }));
+    };
+
+    const cancelEdit = (formType) => {
+        setEditMode(prev => ({ ...prev, [formType]: false }));
+        setImageFile(null);
         if (user) {
-            setProfileData({
-                username: user.username || "",
-                email: user.email || "",
-                country: user.country || "",
-                city: user.city || "",
-                phone: user.phone || "",
-                img: user.img || "",
-            })
-            setImagePreview(user.img || null)
+            setFormData(prev => ({
+                ...prev,
+                [formType]: formType === "personal" ? {
+                    username: user.username || "",
+                    email: user.email || "",
+                    country: user.country || "",
+                    city: user.city || "",
+                    phone: user.phone || "",
+                    img: user.img || ""
+                } : {
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                }
+            }));
+            setImagePreview(user.img || null);
         }
-    }
+        setError("");
+        setSuccessMessage("");
+    };
 
     if (!user) {
-        return <div className="profile-container">Loading...</div>
+        return (
+            <div className="profile-container">
+                <div className="loading-screen">
+                    <div className="loading-spinner"></div>
+                    <p>Loading profile...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="profile-container">
-            <div className="profile-header">
-                <h1 className="profile-title">My Profile</h1>
-                <button onClick={handleLogout} className="logout-button">
-                    <LogOut size={16} />
-                    Logout
-                </button>
-            </div>
-
-            <div className="profile-content">
-                <div className="profile-sidebar">
-                    <div className="profile-image-container">
-                        {imagePreview ? (
-                            <img src={imagePreview || "/placeholder.svg"} alt="Profile" className="profile-image" />
-                        ) : (
-                            <div className="profile-image-placeholder">
-                                <User size={50} />
-                            </div>
-                        )}
-                        {editMode && (
-                            <>
-                                <label htmlFor="profile-image" className="profile-image-edit">
-                                    <Camera size={18} />
-                                </label>
-                                <input
-                                    id="profile-image"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="profile-image-input"
-                                />
-                            </>
-                        )}
-                    </div>
-                    <h2 className="profile-username">{user.username}</h2>
-                    <p className="profile-email">{user.email}</p>
-
-                    <div className="profile-stats">
-                        <div className="stat-item">
-                            <span className="stat-value">12</span>
-                            <span className="stat-label">Posts</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-value">148</span>
-                            <span className="stat-label">Followers</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-value">254</span>
-                            <span className="stat-label">Following</span>
-                        </div>
-                    </div>
+        <>
+            <Navbar />
+            <div className="profile-container">
+                <div className="profile-header">
+                    <h1>My Profile</h1>
+                    <button onClick={handleLogout} className="logout-btn">
+                        <LogOut size={16} /> Logout
+                    </button>
                 </div>
 
-                <div className="profile-main">
-                    <div className="tab-navigation">
-                        <button
-                            className={`tab-button ${activeTab === "personal" ? "active" : ""}`}
-                            onClick={() => setActiveTab("personal")}
-                        >
-                            Personal Information
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === "security" ? "active" : ""}`}
-                            onClick={() => setActiveTab("security")}
-                        >
-                            Security
-                        </button>
-                    </div>
-
-                    {activeTab === "personal" && (
-                        <div className="profile-section">
-                            <div className="section-header">
-                                <h2 className="section-title">Personal Information</h2>
-                                {!editMode ? (
-                                    <button onClick={() => setEditMode(true)} className="edit-button">
-                                        <Edit size={16} />
-                                        Edit
-                                    </button>
-                                ) : null}
-                            </div>
-
-                            {!editMode ? (
-                                <div className="info-grid">
-                                    <div className="info-item">
-                                        <div className="info-label">
-                                            <User size={16} /> Username
-                                        </div>
-                                        <div className="info-value">{user.username}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-label">
-                                            <Mail size={16} /> Email
-                                        </div>
-                                        <div className="info-value">{user.email}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-label">
-                                            <MapPin size={16} /> Country
-                                        </div>
-                                        <div className="info-value">{user.country || "Not specified"}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-label">
-                                            <MapPin size={16} /> City
-                                        </div>
-                                        <div className="info-value">{user.city || "Not specified"}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-label">
-                                            <Phone size={16} /> Phone
-                                        </div>
-                                        <div className="info-value">{user.phone || "Not specified"}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-label">
-                                            <Calendar size={16} /> Member Since
-                                        </div>
-                                        <div className="info-value">
-                                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Unknown"}
-                                        </div>
-                                    </div>
-                                </div>
+                <div className="profile-content">
+                    <div className="profile-sidebar">
+                        <div className="profile-image-container">
+                            {imagePreview ? (
+                                <img src={imagePreview} alt="Profile" className="profile-image" />
                             ) : (
-                                <form onSubmit={handleProfileUpdate} className="profile-form">
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label htmlFor="username" className="form-label">
-                                                <User size={16} />
-                                                Username
-                                            </label>
-                                            <input
-                                                id="username"
-                                                type="text"
-                                                value={profileData.username}
-                                                onChange={handleChange}
-                                                className="form-input"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label htmlFor="email" className="form-label">
-                                                <Mail size={16} />
-                                                Email
-                                            </label>
-                                            <input
-                                                id="email"
-                                                type="email"
-                                                value={profileData.email}
-                                                onChange={handleChange}
-                                                className="form-input"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label htmlFor="country" className="form-label">
-                                                <MapPin size={16} />
-                                                Country
-                                            </label>
-                                            <select id="country" value={profileData.country} onChange={handleChange} className="form-select">
-                                                <option value="">Select your country</option>
-                                                {countries.map((country) => (
-                                                    <option key={country} value={country}>
-                                                        {country}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="form-group">
-                                            <label htmlFor="city" className="form-label">
-                                                <MapPin size={16} />
-                                                City
-                                            </label>
-                                            <input
-                                                id="city"
-                                                type="text"
-                                                value={profileData.city}
-                                                onChange={handleChange}
-                                                className="form-input"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="phone" className="form-label">
-                                            <Phone size={16} />
-                                            Phone Number
-                                        </label>
-                                        <input
-                                            id="phone"
-                                            type="tel"
-                                            value={profileData.phone}
-                                            onChange={handleChange}
-                                            className="form-input"
-                                        />
-                                    </div>
-
-                                    {localError && <div className="error-text">{localError}</div>}
-                                    {successMessage && <div className="success-text">{successMessage}</div>}
-
-                                    <div className="form-actions">
-                                        <button type="button" onClick={cancelEdit} className="cancel-button">
-                                            <X size={16} />
-                                            Cancel
-                                        </button>
-                                        <button type="submit" disabled={isLoading} className="save-button">
-                                            {isLoading ? (
-                                                "Saving..."
-                                            ) : (
-                                                <>
-                                                    <Save size={16} />
-                                                    Save Changes
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </form>
+                                <div className="profile-image-placeholder">
+                                    <User size={48} />
+                                </div>
+                            )}
+                            {(editMode.personal || editMode.security) && (
+                                <>
+                                    <label htmlFor="profile-image-upload" className="edit-image-btn">
+                                        <Camera size={18} />
+                                        <span>Change Photo</span>
+                                    </label>
+                                    <input
+                                        id="profile-image-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="hidden-file-input"
+                                    />
+                                </>
                             )}
                         </div>
-                    )}
 
-                    {activeTab === "security" && (
-                        <div className="profile-section">
-                            <div className="section-header">
-                                <h2 className="section-title">Change Password</h2>
+                        <h2>{user.username}</h2>
+                        <p className="user-email">{user.email}</p>
+
+                        <div className="account-info">
+                            <div className="info-item">
+                                <Calendar size={16} />
+                                <span>Member since: {new Date(user.createdAt).toLocaleDateString()}</span>
                             </div>
-
-                            <form onSubmit={handlePasswordUpdate} className="profile-form">
-                                <div className="form-group">
-                                    <label htmlFor="currentPassword" className="form-label">
-                                        <Lock size={16} />
-                                        Current Password
-                                    </label>
-                                    <div className="password-container">
-                                        <input
-                                            id="currentPassword"
-                                            type={showCurrentPassword ? "text" : "password"}
-                                            value={passwordData.currentPassword}
-                                            onChange={handlePasswordChange}
-                                            className="form-input"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                            className="password-toggle"
-                                        >
-                                            {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
+                            {user.lastLogin && (
+                                <div className="info-item">
+                                    <Lock size={16} />
+                                    <span>Last login: {new Date(user.lastLogin).toLocaleString()}</span>
                                 </div>
-
-                                <div className="form-row">
-                                    <div className="form-group">
-                                        <label htmlFor="newPassword" className="form-label">
-                                            <Lock size={16} />
-                                            New Password
-                                        </label>
-                                        <div className="password-container">
-                                            <input
-                                                id="newPassword"
-                                                type={showNewPassword ? "text" : "password"}
-                                                value={passwordData.newPassword}
-                                                onChange={handlePasswordChange}
-                                                className="form-input"
-                                                required
-                                                minLength={8}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                                className="password-toggle"
-                                            >
-                                                {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="confirmPassword" className="form-label">
-                                            <Lock size={16} />
-                                            Confirm New Password
-                                        </label>
-                                        <div className="password-container">
-                                            <input
-                                                id="confirmPassword"
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                value={passwordData.confirmPassword}
-                                                onChange={handlePasswordChange}
-                                                className="form-input"
-                                                required
-                                                minLength={8}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="password-toggle"
-                                            >
-                                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="password-requirements">
-                                    <p className="password-requirements-title">Password requirements:</p>
-                                    <ul className="password-requirements-list">
-                                        <li>At least 8 characters long</li>
-                                        <li>Must match the confirmation password</li>
-                                    </ul>
-                                </div>
-
-                                {localError && <div className="error-text">{localError}</div>}
-                                {successMessage && <div className="success-text">{successMessage}</div>}
-
-                                <div className="form-actions">
-                                    <button type="submit" disabled={isLoading} className="save-button">
-                                        {isLoading ? "Updating..." : "Update Password"}
-                                    </button>
-                                </div>
-                            </form>
+                            )}
                         </div>
-                    )}
+                    </div>
+
+                    <div className="profile-main-content">
+                        <div className="tab-navigation">
+                            <button
+                                className={`tab-btn ${activeTab === "personal" ? "active" : ""}`}
+                                onClick={() => setActiveTab("personal")}
+                            >
+                                Personal Info
+                            </button>
+                            <button
+                                className={`tab-btn ${activeTab === "security" ? "active" : ""}`}
+                                onClick={() => setActiveTab("security")}
+                            >
+                                Security
+                            </button>
+                        </div>
+
+                        {error && (
+                            <div className="alert-message error">
+                                <FlagTriangleRight size={18} />
+                                {error}
+                            </div>
+                        )}
+                        {successMessage && (
+                            <div className="alert-message success">
+                                <IoMdDoneAll size={18} />
+                                {successMessage}
+                            </div>
+                        )}
+
+                        {activeTab === "personal" && (
+                            <div className="profile-section">
+                                <div className="section-header">
+                                    <h2>Personal Information</h2>
+                                    {!editMode.personal ? (
+                                        <button
+                                            className="edit-btn"
+                                            onClick={() => setEditMode({ ...editMode, personal: true })}
+                                        >
+                                            <Edit size={16} /> Edit Profile
+                                        </button>
+                                    ) : null}
+                                </div>
+
+                                {!editMode.personal ? (
+                                    <div className="info-grid">
+                                        <div className="info-item">
+                                            <div className="info-label"><User size={16} /> Username</div>
+                                            <div className="info-value">{user.username}</div>
+                                        </div>
+                                        <div className="info-item">
+                                            <div className="info-label"><Mail size={16} /> Email</div>
+                                            <div className="info-value">{user.email}</div>
+                                        </div>
+                                        <div className="info-item">
+                                            <div className="info-label"><MapPin size={16} /> Country</div>
+                                            <div className="info-value">{user.country || "Not specified"}</div>
+                                        </div>
+                                        <div className="info-item">
+                                            <div className="info-label"><MapPin size={16} /> City</div>
+                                            <div className="info-value">{user.city || "Not specified"}</div>
+                                        </div>
+                                        <div className="info-item">
+                                            <div className="info-label"><Phone size={16} /> Phone</div>
+                                            <div className="info-value">{user.phone || "Not specified"}</div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handleProfileUpdate} className="edit-form">
+                                        <div className="form-grid">
+                                            <div className="form-group">
+                                                <label htmlFor="username"><User size={16} /> Username*</label>
+                                                <input
+                                                    id="username"
+                                                    type="text"
+                                                    value={formData.personal.username}
+                                                    onChange={(e) => handleChange(e, "personal")}
+                                                    required
+                                                    minLength={3}
+                                                    maxLength={30}
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label htmlFor="email"><Mail size={16} /> Email*</label>
+                                                <input
+                                                    id="email"
+                                                    type="email"
+                                                    value={formData.personal.email}
+                                                    onChange={(e) => handleChange(e, "personal")}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label htmlFor="country"><MapPin size={16} /> Country</label>
+                                                <select
+                                                    id="country"
+                                                    value={formData.personal.country}
+                                                    onChange={(e) => handleChange(e, "personal")}
+                                                >
+                                                    <option value="">Select Country</option>
+                                                    {countries.map(country => (
+                                                        <option key={country} value={country}>{country}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label htmlFor="city"><MapPin size={16} /> City</label>
+                                                <input
+                                                    id="city"
+                                                    type="text"
+                                                    value={formData.personal.city}
+                                                    onChange={(e) => handleChange(e, "personal")}
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label htmlFor="phone"><Phone size={16} /> Phone</label>
+                                                <input
+                                                    id="phone"
+                                                    type="tel"
+                                                    value={formData.personal.phone}
+                                                    onChange={(e) => handleChange(e, "personal")}
+                                                    pattern="[0-9]{10,15}"
+                                                    title="Phone number should be 10-15 digits"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-actions">
+                                            <button
+                                                type="button"
+                                                className="cancel-btn"
+                                                onClick={() => cancelEdit("personal")}
+                                                disabled={isLoading}
+                                            >
+                                                <X size={16} /> Cancel
+                                            </button>
+                                            <button type="submit" className="save-btn" disabled={isLoading}>
+                                                {isLoading ? (
+                                                    <span className="loading-spinner-btn"></span>
+                                                ) : (
+                                                    <>
+                                                        <Save size={16} /> Save Changes
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === "security" && (
+                            <div className="profile-section">
+                                <div className="section-header">
+                                    <h2>Security Settings</h2>
+                                    {!editMode.security && (
+                                        <button
+                                            className="edit-btn"
+                                            onClick={() => setEditMode({ ...editMode, security: true })}
+                                        >
+                                            <Edit size={16} /> Change Password
+                                        </button>
+                                    )}
+                                </div>
+
+                                {!editMode.security ? (
+                                    <div className="security-info">
+                                        <p>Last password change: {user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : "Never"}</p>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handlePasswordUpdate} className="edit-form">
+                                        <div className="form-group">
+                                            <label htmlFor="currentPassword"><Lock size={16} /> Current Password*</label>
+                                            <div className="password-input">
+                                                <input
+                                                    id="currentPassword"
+                                                    type={passwordVisibility.current ? "text" : "password"}
+                                                    value={formData.security.currentPassword}
+                                                    onChange={(e) => handleChange(e, "security")}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="toggle-password"
+                                                    onClick={() => togglePasswordVisibility("current")}
+                                                >
+                                                    {passwordVisibility.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="newPassword"><Lock size={16} /> New Password*</label>
+                                            <div className="password-input">
+                                                <input
+                                                    id="newPassword"
+                                                    type={passwordVisibility.new ? "text" : "password"}
+                                                    value={formData.security.newPassword}
+                                                    onChange={(e) => handleChange(e, "security")}
+                                                    required
+                                                    minLength={8}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="toggle-password"
+                                                    onClick={() => togglePasswordVisibility("new")}
+                                                >
+                                                    {passwordVisibility.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="confirmPassword"><Lock size={16} /> Confirm Password*</label>
+                                            <div className="password-input">
+                                                <input
+                                                    id="confirmPassword"
+                                                    type={passwordVisibility.confirm ? "text" : "password"}
+                                                    value={formData.security.confirmPassword}
+                                                    onChange={(e) => handleChange(e, "security")}
+                                                    required
+                                                    minLength={8}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="toggle-password"
+                                                    onClick={() => togglePasswordVisibility("confirm")}
+                                                >
+                                                    {passwordVisibility.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="password-requirements">
+                                            <p><strong>Password Requirements:</strong></p>
+                                            <ul>
+                                                <li>Minimum 8 characters</li>
+                                                <li>Must match confirmation</li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="form-actions">
+                                            <button
+                                                type="button"
+                                                className="cancel-btn"
+                                                onClick={() => cancelEdit("security")}
+                                                disabled={isLoading}
+                                            >
+                                                <X size={16} /> Cancel
+                                            </button>
+                                            <button type="submit" className="save-btn" disabled={isLoading}>
+                                                {isLoading ? (
+                                                    <span className="loading-spinner-btn"></span>
+                                                ) : (
+                                                    "Update Password"
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
-    )
-}
+            <Footer />
+        </>
+    );
+};
 
-export default UserProfile
+export default UserProfile;

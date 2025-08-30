@@ -1,201 +1,99 @@
-/* Reset and base styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* register.css */
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f8f9fa;
-}
-
-/* Container and layout */
 .register-container {
-    min-height: 100vh;
     display: flex;
-    align-items: center;
     justify-content: center;
-    padding: 20px;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem;
 }
 
 .register-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 600px;
-    padding: 40px;
+    max-width: 900px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    padding: 3rem;
+    animation: fadeIn 0.6s ease-in-out;
 }
 
 .register-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 2rem;
 }
 
 .register-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 8px;
+    font-size: 2.2rem;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .register-description {
-    color: #666;
+    color: #718096;
     font-size: 1rem;
 }
 
-/* Form styles */
 .register-form {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 1.5rem;
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-}
-
-@media (min-width: 768px) {
-    .form-row {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-.form-label {
-    font-weight: 500;
-    color: #374151;
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.form-input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: white;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-input::placeholder {
-    color: #9ca3af;
-}
-
-/* Select dropdown */
-.form-select {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    background-color: white;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.form-select:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Password input container */
-.password-container {
-    position: relative;
-}
-
-.password-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #6b7280;
-    padding: 4px;
-    border-radius: 4px;
-    transition: color 0.2s ease;
-}
-
-.password-toggle:hover {
-    color: #374151;
-}
-
-/* Profile image upload */
 .profile-upload-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
+    margin-bottom: 1rem;
 }
 
 .profile-image-wrapper {
     position: relative;
-    width: 96px;
-    height: 96px;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1rem;
 }
 
 .profile-image {
-    width: 96px;
-    height: 96px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #e5e7eb;
+    border: 3px solid #e2e8f0;
 }
 
 .profile-placeholder {
-    width: 96px;
-    height: 96px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
-    background-color: #f3f4f6;
-    border: 4px solid #e5e7eb;
+    background: #f8fafc;
     display: flex;
-    align-items: center;
     justify-content: center;
-    color: #9ca3af;
+    align-items: center;
+    border: 3px dashed #cbd5e0;
 }
 
 .profile-upload-button {
     position: absolute;
     bottom: 0;
     right: 0;
-    background-color: #3b82f6;
+    background: #667eea;
     color: white;
-    border: none;
-    border-radius: 50%;
     width: 32px;
     height: 32px;
+    border-radius: 50%;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .profile-upload-button:hover {
-    background-color: #2563eb;
+    background: #5a67d8;
+    transform: scale(1.1);
 }
 
 .profile-upload-input {
@@ -203,140 +101,174 @@ body {
 }
 
 .profile-upload-label {
-    font-size: 0.875rem;
-    color: #6b7280;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
+    color: #667eea;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: #f0f4ff;
 }
 
-/* Submit button */
+.profile-upload-label:hover {
+    background: #e0e7ff;
+}
+
+.form-row {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.form-row > .form-group {
+    flex: 1;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.form-input, .form-select {
+    padding: 0.8rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background-color: #f8fafc;
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    background-color: white;
+}
+
+.password-container {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #718096;
+    padding: 5px;
+}
+
+.password-toggle:hover {
+    color: #667eea;
+}
+/* When disabled, just fade the color */
+.submit-button:disabled {
+    background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.8; /* smooth faded look */
+}
+.password-requirements {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: -0.5rem;
+}
+
+.password-requirements-title {
+    font-size: 0.85rem;
+    color: #4a5568;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.password-requirements-list {
+    font-size: 0.8rem;
+    color: #718096;
+    padding-left: 1.2rem;
+    margin: 0;
+}
+
+.error-text {
+    color: #e53e3e;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: -0.5rem;
+}
+
 .submit-button {
-    width: 100%;
-    background-color: #3b82f6;
+    padding: 0.8rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 14px 24px;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    margin-top: 1rem;
 }
 
 .submit-button:hover {
-    background-color: #2563eb;
-}
-
-.submit-button:active {
-    background-color: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
 .submit-button:disabled {
-    background-color: #93c5fd;
+    background: #cbd5e0;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
-/* Login link */
 .login-link-container {
     text-align: center;
-    font-size: 0.875rem;
-    color: #6b7280;
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-top: 1rem;
 }
 
 .login-link {
-    color: #3b82f6;
-    text-decoration: none;
+    cursor: pointer;
+    color: #667eea;
     font-weight: 500;
-    transition: color 0.2s ease;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
 }
 
 .login-link:hover {
-    color: #2563eb;
+    color: #764ba2;
     text-decoration: underline;
 }
 
-/* Password requirements */
-.password-requirements {
-    background-color: #f9fafb;
-    padding: 16px;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.password-requirements-title {
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: #374151;
-}
-
-.password-requirements-list {
-    list-style: disc;
-    margin-left: 20px;
-}
-
-.password-requirements-list li {
-    margin-bottom: 4px;
-}
-
-/* Icons */
-.icon {
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-}
-
-/* Error message */
-.error-text {
-    color: #ef4444;
-    font-size: 0.875rem;
-    margin-top: -8px;
-    margin-bottom: -8px;
-}
-
-/* Image preview */
-.image-preview {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 50%;
-    margin: 0 auto;
-    display: block;
-    border: 3px solid #e5e7eb;
-}
-
-/* Responsive adjustments */
-@media (max-width: 767px) {
+/* Responsive design */
+@media (max-width: 768px) {
     .register-card {
-        padding: 24px;
-        margin: 16px;
+        padding: 2rem 1.5rem;
     }
-
-    .register-title {
-        font-size: 1.75rem;
-    }
-
+    
     .form-row {
-        gap: 16px;
+        flex-direction: column;
+        gap: 1rem;
     }
-}
-
-/* Form validation states */
-.form-input:invalid {
-    border-color: #ef4444;
-}
-
-.form-input:valid {
-    border-color: #10b981;
-}
-
-/* Focus states for accessibility */
-.form-input:focus,
-.form-select:focus,
-.submit-button:focus,
-.password-toggle:focus {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
+    
+    .profile-upload-label {
+        font-size: 0.8rem;
+    }
 }

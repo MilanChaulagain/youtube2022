@@ -4,7 +4,7 @@ import "./touristBanner.css"
 const TouristGuideBanner = () => {
     const guideData = {
         id: "1",
-        image: "/images/tourist-guider.png",
+        image: "https://media.istockphoto.com/id/1071461664/photo/having-a-tour-through-the-city-streets.jpg?s=612x612&w=0&k=20&c=nlr914eKeQkYVpv7UgKCGU1oWLd97eRCi5e3jRggEhw=",
         sponsor: "Expert Local Help",
         title: "Hire Your Tourist Guide Here",
         description:

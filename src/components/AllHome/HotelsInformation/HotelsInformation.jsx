@@ -36,19 +36,33 @@ const Star = ({ filled }) => (
     </svg>
 );
 
+const HalfStar = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2">
+        <defs>
+            <linearGradient id="half-star" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="50%" stopColor="#fbbf24" />
+                <stop offset="50%" stopColor="transparent" />
+            </linearGradient>
+        </defs>
+        <polygon 
+            points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
+            fill="url(#half-star)" 
+            stroke="#fbbf24"
+        />
+    </svg>
+);
+
 function NepalHotelCarousel() {
     const [hotels, setHotels] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const hotelsPerPage = 3;
-    const totalPages = Math.ceil(hotels.length / hotelsPerPage);
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Fetch hotels from your API and limit to 9
         const fetchHotels = async () => {
             try {
                 const res = await axios.get("http://localhost:8800/api/hotels");
-                setHotels(res.data.slice(0, 9)); // only first 9 hotels
+                setHotels(res.data);
             } catch (error) {
                 console.error("Failed to fetch hotels:", error);
             }
@@ -57,12 +71,14 @@ function NepalHotelCarousel() {
         fetchHotels();
     }, []);
 
-    const nextPage = () => {
-        setCurrentPage((prevPage) => (prevPage + 1) % totalPages);
+    const totalPages = Math.ceil(hotels.length / hotelsPerPage);
+
+    const slideNext = () => {
+        setCurrentPage((prev) => (prev + 1) % totalPages);
     };
 
-    const prevPage = () => {
-        setCurrentPage((prevPage) => (prevPage - 1 + totalPages) % totalPages);
+    const slidePrev = () => {
+        setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
     };
 
     const getCurrentHotels = () => {
@@ -71,19 +87,21 @@ function NepalHotelCarousel() {
     };
 
     const renderStars = (rating) => {
-        if (!rating) return null; // if no rating, return nothing or you can show empty stars if preferred
+        if (!rating || rating === 0) {
+            return Array(5).fill(null).map((_, i) => <Star key={`empty-${i}`} filled={false} />);
+        }
 
         const stars = [];
         const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 !== 0;
+        const hasHalfStar = rating % 1 >= 0.5;
 
         for (let i = 0; i < 5; i++) {
             if (i < fullStars) {
-                stars.push(<Star key={i} filled={true} />);
+                stars.push(<Star key={`full-${i}`} filled={true} />);
             } else if (i === fullStars && hasHalfStar) {
-                stars.push(<Star key={i} filled={true} />);
+                stars.push(<HalfStar key={`half-${i}`} />);
             } else {
-                stars.push(<Star key={i} filled={false} />);
+                stars.push(<Star key={`empty-${i}`} filled={false} />);
             }
         }
         return stars;
@@ -103,33 +121,32 @@ function NepalHotelCarousel() {
 
     const getAmenities = (hotelName) => {
         const amenitiesMap = {
-            "Grand Hotel Kathmandu": ["Luxury", "Pool", "Spa"],
-            "Vivanta Kathmandu": ["Business", "Restaurant", "WiFi"],
-            "Hotel Heritage": ["Heritage", "Culture", "Traditional"],
-            "Hyatt Regency Kathmandu": ["5-Star", "Casino", "Conference"],
-            "Hotel Himalaya": ["Mountain View", "Garden", "Restaurant"],
-            "Peacock Guest House": ["Budget", "Cozy", "Local"],
-            "Gokarna Forest Resort": ["Nature", "Golf", "Resort"],
-            "Summit Hotel": ["Valley View", "Business", "Modern"],
-            "Tulaja Boutique Hotel": ["Boutique", "Art", "Elegant"],
+            "Grand Hotel Kathmandu": ["Luxury Suite", "Infinity Pool", "Royal Spa"],
+            "Vivanta Kathmandu": ["Business Center", "Fine Dining", "High-Speed WiFi"],
+            "Hotel Heritage": ["Cultural Tours", "Heritage Architecture", "Traditional Cuisine"],
+            "Hyatt Regency Kathmandu": ["Premium Rooms", "Casino Gaming", "Event Halls"],
+            "Hotel Himalaya": ["Himalayan Views", "Botanical Garden", "Multi-Cuisine"],
+            "Peacock Guest House": ["Budget Friendly", "Homely Atmosphere", "Local Experience"],
+            "Gokarna Forest Resort": ["Forest Retreat", "Golf Course", "Wildlife Safari"],
+            "Summit Hotel": ["Valley Panorama", "Corporate Facilities", "Contemporary Design"],
+            "Tulaja Boutique Hotel": ["Artistic Interiors", "Personalized Service", "Boutique Experience"],
+            "Hotel Annapurna": ["Mountain Cuisine", "Trekking Base", "Adventure Tours"],
+            "Kathmandu Guest House": ["Historic Charm", "Courtyard Dining", "Cultural Hub"],
+            "Hotel Shanker": ["Palace Heritage", "Royal Gardens", "Vintage Luxury"],
+            "Dwarika's Hotel": ["Newari Architecture", "Handcrafted Decor", "Cultural Immersion"],
+            "Hotel Yak & Yeti": ["Casino Resort", "Shopping Arcade", "Entertainment Hub"],
+            "Radisson Hotel": ["Sky Lounge", "Fitness Center", "Airport Shuttle"],
         };
-        return amenitiesMap[hotelName] || ["Comfort", "Service", "Clean"];
+        return amenitiesMap[hotelName] || ["Quality Service", "Clean Rooms", "Friendly Staff"];
     };
 
     return (
         <div className="main-container">
-            <div className="header-section">
-                <h1 className="main-title">Enjoy a Luxury Stay with us.</h1>
-                <p className="main-subtitle">
-                    Book this exclusive collection of luxury hotels in Kathmandu Valley and enjoy a luxurious stay.
-                </p>
-            </div>
-
+            <h1 className="hotelpagetitle">Enjoy a Luxury Stay with Us</h1>
             <div className="carousel-container">
-                <button onClick={prevPage} className="navigation-button">
+                <button className="slider__btn-prev" onClick={slidePrev}>
                     <ChevronLeft />
                 </button>
-
                 <div className="hotels-container">
                     {getCurrentHotels().map((hotel) => (
                         <div key={hotel._id || hotel.id} className="hotel-item">
@@ -143,12 +160,17 @@ function NepalHotelCarousel() {
                                     }}
                                 />
                                 <div className="rating-container">
-                                    <div className="stars-wrapper">{renderStars(hotel.rating)}</div>
-                                    <span className="rating-number">{hotel.rating ? hotel.rating.toFixed(1) : "N/A"}</span>
+                                    <div className="stars-wrapper">
+                                        {renderStars(hotel.rating)}
+                                    </div>
+                                    <span className="rating-number">
+                                        {hotel.rating ? hotel.rating.toFixed(1) : "N/A"}
+                                    </span>
                                 </div>
-                                <div className={`city-label ${getCityClass(hotel.city)}`}>{hotel.city}</div>
+                                <div className={`city-label ${getCityClass(hotel.city)}`}>
+                                    {hotel.city}
+                                </div>
                             </div>
-
                             <div className="hotel-details">
                                 <div className="hotel-title-section">
                                     <h3 className="hotel-title">{hotel.name}</h3>
@@ -189,26 +211,9 @@ function NepalHotelCarousel() {
                         </div>
                     ))}
                 </div>
-
-                <button onClick={nextPage} className="navigation-button">
+                <button className="slider__btn-next" onClick={slideNext}>
                     <ChevronRight />
                 </button>
-            </div>
-
-            <div className="pagination-section">
-                {Array.from({ length: totalPages }, (_, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setCurrentPage(index)}
-                        className={`pagination-item ${index === currentPage ? "pagination-active" : ""}`}
-                    />
-                ))}
-            </div>
-
-            <div className="page-information">
-                <span className="page-details">
-                    Page {currentPage + 1} of {totalPages} • Showing {getCurrentHotels().length} hotels from Kathmandu Valley
-                </span>
             </div>
         </div>
     );

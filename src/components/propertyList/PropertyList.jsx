@@ -33,7 +33,6 @@ const propertyTypeData = [
 const PropertyList = () => {
   const { data, loading, error } = useFetch("http://localhost:8800/api/hotels/countByType");
 
-  // Create a map from API response: type -> count
   const countMap = {};
   if (data) {
     data.forEach(item => {

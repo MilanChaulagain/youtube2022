@@ -34,7 +34,7 @@
 }
 
 .card {
-    flex: 0 0 calc(33.3333% - 10.6px);
+    flex: 0 0 calc(25% - 1.125rem);
     min-width: 220px;
     height: 280px;
     position: relative;
@@ -102,39 +102,39 @@
 }
 
 .nav-button {
-    background: rgba(255, 255, 255, 0.95);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
     border: none;
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    transition: all 0.3s ease;
-    color: #4f46e5;
-    z-index: 10;
+    z-index: 2;
+    transition: background 0.3s ease;
 }
 
 .nav-button:disabled {
-    opacity: 0.4;
+    opacity: 0.3;
     cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .nav-button:hover:not(:disabled) {
-    transform: scale(1.1);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    transform: translateY(-50%);
 }
 
 .prev-button {
-    position: absolute;
-    left: -24px;
+    left: 20px;
 }
 
 .next-button {
-    position: absolute;
-    right: -24px;
+    right: 20px;
 }
 
 .dot-indicators {

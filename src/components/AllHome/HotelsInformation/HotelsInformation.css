@@ -14,25 +14,11 @@
     margin-bottom: 60px;
 }
 
-.main-title {
-    font-size: 4rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #1f2937 0%, #4f46e5 50%, #7c3aed 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 20px;
-    line-height: 1.1;
-    margin-top: 0;
-}
-
-.main-subtitle {
-    font-size: 1.4rem;
-    color: #6b7280;
-    max-width: 700px;
-    margin: 0 auto;
-    line-height: 1.6;
-    font-weight: 400;
+.hotelpagetitle {
+    font-size: 2.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
 }
 
 /* Carousel Container */
@@ -86,10 +72,10 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     border: 1px solid #f3f4f6;
-    transform: translateY(0);
-    height: 520px;
     display: flex;
     flex-direction: column;
+    min-height: 520px;
+    height: 100%;
 }
 
 .hotel-item:hover {

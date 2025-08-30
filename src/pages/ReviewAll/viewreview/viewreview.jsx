@@ -45,10 +45,10 @@ const AllReviewsPage = () => {
 
         try {
             if (filter === "all") {
-                const res = await axios.get("/review");
+                const res = await axios.get("http://localhost:8800/api/review");
                 setReviews(res.data);
             } else {
-                const res = await axios.get(`/review/model/${filter}`);
+                const res = await axios.get(`http://localhost:8800/api/review/model/${filter}`);
                 setReviews(res.data);
             }
         } catch (err) {

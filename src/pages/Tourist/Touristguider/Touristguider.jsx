@@ -5,6 +5,9 @@ import Navbar from "../../../components/navbar/Navbar";
 import Footer from "../../../components/footer/Footer";
 import { useNavigate } from "react-router-dom";
 
+// Add this license number pattern validation
+const licenseNumberPattern = /^[A-Z0-9]+$/; // Allows uppercase letters, numbers, and hyphens
+
 const categoryOptions = [
     "Adventure",
     "Cultural",
@@ -15,9 +18,6 @@ const categoryOptions = [
     "Trekking",
     "Local Experience",
 ];
-
-// Hardcoded regex for license number validation
-const licenseNumberPattern = /^TCB\/TG\([A-Z\/_]+\)-\d{2}\/\d{4,5}$/;
 
 const TouristGuideForm = () => {
     const [formData, setFormData] = useState({
@@ -59,15 +59,13 @@ const TouristGuideForm = () => {
             setPreview(URL.createObjectURL(file));
         }
     };
-
     const uploadToCloudinary = async () => {
         if (!imageFile) return "";
         const data = new FormData();
         data.append("file", imageFile);
-        data.append("upload_preset", "upload");
+        data.append("", "");
 
         const res = await axios.post(
-            "https://api.cloudinary.com/v1_1/doqbzwm1o/image/upload",
             data
         );
 

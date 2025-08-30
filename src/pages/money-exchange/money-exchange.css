@@ -552,6 +552,7 @@
 
 .exchange-radius-control input[type="range"] {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 6px;
     border-radius: 5px;
@@ -574,6 +575,57 @@
 
 .exchange-radius-control input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.2);
+}
+
+/* Exchange Tabs( Tab Navigation)*/
+.exchange-tabs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    margin-top: 2rem;
+    background: transparent;
+    border-radius: 0.75rem;
+}
+
+.exchange-tab {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #ffffff;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.exchange-tab:hover {
+    background: #6588cf;
+}
+
+.exchange-tab.active {
+    background: #3b82f6;
+    color: #ffffff;
+    border-color: #3b82f6;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+@media (max-width: 640px) {
+    .exchange-tabs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .exchange-tab {
+        width: 100%;
+        font-size: 1rem;
+    }
 }
 
 /* Location coordinates display */

@@ -5,7 +5,7 @@ import "./footer.css"
 import logo from "../../assets/logo.png"
 export default function Footer() {
   return (
-    <footer className="footer">
+    <footer className="footercc">
       <div className="footer-container">
         <div className="footer-grid">
           {/* About yatraNepal */}

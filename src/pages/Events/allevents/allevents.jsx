@@ -49,6 +49,9 @@ export default function ChadParbaList() {
             );
         }
 
+        // Sort alphabetically by title
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        
         setFiltered(result);
     }, [month, events, searchQuery]);
 
@@ -134,7 +137,7 @@ export default function ChadParbaList() {
                                         </div>
                                         <div className="card-footer">
                                             <Link to={`/events/${event._id}`} className="read-more-link">
-                                                <span>Learn More</span>
+                                                <span>Read More</span>
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                                     <path d="M5 12h14" />
                                                     <path d="M12 5l7 7-7 7" />
@@ -150,6 +153,5 @@ export default function ChadParbaList() {
             </div>
             <Footer />
         </>
-
     );
 }

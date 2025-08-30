@@ -9,6 +9,7 @@ import TravelBanner from "../../components/AllHome/Banner/banner";
 import TouristGuideBanner from "../../components/AllHome/TouristGuideBanner/TouristGuideBanner";
 import PlaceBanner from "../../components/AllHome/PlaceBanner/PlaceBanner";
 import Weekend from "../../components/AllHome/weekend/weekend";
+import ExchangeCentersApp from "../../components/AllHome/Money-exchange/moneyexchange";
 
 const Home = () => {
   return (
@@ -19,6 +20,7 @@ const Home = () => {
       <PlaceBanner />
       <TravelBanner />
       <HotelsInformation />
+      <ExchangeCentersApp />
       <TouristGuideBanner />
       <Weekend />
       <Footer />
